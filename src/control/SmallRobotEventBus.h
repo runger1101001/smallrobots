@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <WString.h>
+#include <Arduino.h>
 #include <functional>
 #include <map>
 #include <vector>

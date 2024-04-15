@@ -1,9 +1,8 @@
 
 #include "./SmallRobotControl.h"
-#include "./SmallRobotConfig.h"
+#include "../config/SmallRobotConfig.h"
 #include "./SmallRobotEventBus.h"
 #include <OSCMessage.h>
-#include "services/isp/PicoUpdateService.h"
 
 namespace SmallRobots {
 

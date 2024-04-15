@@ -27,6 +27,7 @@
 
 #include <map>
 #include <functional>
+#include <Arduino.h>
 #include <OSCMessage.h>
 
 namespace SmallRobots {

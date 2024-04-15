@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "./Behaviours.h"
 #include "../control/SmallRobotEventBus.h"
-
+#include "../control/SmallRobotControl.h"
 
 
 namespace SmallRobots {

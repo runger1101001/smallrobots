@@ -10,6 +10,11 @@ namespace SmallRobots {
     SmallRobotParameter SmallRobotConfig::UNKNOWN_PARAM{"unknown", SmallRobotParameterType::T_UNKNOWN};
 
     SmallRobotConfig::SmallRobotConfig() {
+        // configure permanent tags for this robot
+        tags += "#all";
+        #if defined(SMALLROBOT_SPECIES)
+        tags += (String("#")+SMALLROBOT_SPECIES);    
+        #endif    
     };
 
     SmallRobotConfig::~SmallRobotConfig() {
@@ -24,11 +29,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            Serial.println("WARN: could not add parameter "+name);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug) Serial.println("Added parameter "+name);
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
     };
 
 
@@ -38,11 +43,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            Serial.println("WARN: could not add parameter "+name);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug) Serial.println("Added parameter "+name);
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
     };
 
 
@@ -52,11 +57,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            Serial.println("WARN: could not add parameter "+name);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug) Serial.println("Added parameter "+name);
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
     };
 
 

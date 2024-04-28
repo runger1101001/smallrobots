@@ -5,6 +5,10 @@
 #include <map>
 #include <set>
 
+#include "SmallRobotDebug.h"
+
+
+
 namespace SmallRobots {
 
 
@@ -44,10 +48,6 @@ namespace SmallRobots {
             return f;
         };
 
-        operator int32_t() const {
-            return i;
-        };
-
         operator String() const {
             return *s;
         };
@@ -58,21 +58,21 @@ namespace SmallRobots {
 
 
         SmallRobotParameter& operator=(float value) {
-            if (debug) Serial.println("Setting float param "+name+" to "+String(value));
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting float param "+name+" to "+String(value));
             f = value;
             return *this;
         };
 
 
         SmallRobotParameter& operator=(int32_t value) {
-            if (debug) Serial.println("Setting int param "+name+" to "+String(value));
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting int param "+name+" to "+String(value));
             i = value;
             return *this;
         };
 
 
         SmallRobotParameter& operator=(String value) {
-            if (debug) Serial.println("Setting string param "+name+" to "+value);
+            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting string param "+name+" to "+value);
             *s = value;
             return *this;
         };

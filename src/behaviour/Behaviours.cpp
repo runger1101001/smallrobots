@@ -1,12 +1,15 @@
 #include "Arduino.h"
 #include "./Behaviours.h"
+#include "../control/SmallRobotControl.h"
 #include "../control/SmallRobotEventBus.h"
+#include "SmallRobotDebug.h"
+#include <OSCMessage.h>
 
 
 
 namespace SmallRobots {
 
-    BehaviourEngine engine;
+    BehaviourEngine behaviours;
 
 
     BehaviourEngine::BehaviourEngine(){};
@@ -32,16 +35,20 @@ namespace SmallRobots {
     void BehaviourEngine::add(Behaviour* behaviour){
         if (behaviour != NULL) {
             if (behaviours.insert(behaviour).second){
-                Serial.print("Starting: ");
-                Serial.println(behaviour->getName());
+                if (debug && smallrobot_debug_print!=nullptr){
+                    smallrobot_debug_print->print("Starting: ");
+                    smallrobot_debug_print->println(behaviour->getName());
+                }
             }
         }
     };
     void BehaviourEngine::remove(Behaviour* behaviour){
         if (behaviour != NULL) {
             behaviours.erase(behaviour);
-            Serial.print("Finished: ");
-            Serial.println(behaviour->getName());
+            if (debug && smallrobot_debug_print!=nullptr){
+                smallrobot_debug_print->print("Finished: ");
+                smallrobot_debug_print->println(behaviour->getName());
+            }
         }
     };
     void BehaviourEngine::replace(Behaviour* oldBehaviour, Behaviour* newBehaviour){

@@ -42,15 +42,14 @@ namespace SmallRobots {
 
 
   class SmallRobotControl {
-  friend class SmallRobotEsp32Wifi;
   public:
-
-    void start();
+    void init();
     void addCommand(String name, std::function<void(OSCMessage&)> callback);
+
+    void onPacket(AsyncUDPPacket packet);
 
     bool debug = false;
   private:
-    void onPacket(AsyncUDPPacket packet);
     std::map<String, SmallRobotCommand> commands;
   };
 

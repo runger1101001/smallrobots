@@ -55,6 +55,6 @@ namespace SmallRobots {
     };
 
 
-    extern BehaviourEngine engine;
+    extern BehaviourEngine behaviours;
 
 };

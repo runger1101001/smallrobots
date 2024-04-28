@@ -6,7 +6,6 @@
 #include <OSCMessage.h>
 
 
-
 namespace SmallRobots {
 
     BehaviourEngine behaviours;

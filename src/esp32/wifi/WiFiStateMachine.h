@@ -16,7 +16,7 @@
 #include "control/SmallRobotControl.h"
 #include "behaviour/Behaviours.h"
 #include "control/SmallRobotEventBus.h"
-
+#include "SmallRobotDebug.h"
 
 namespace SmallRobots {
 
@@ -65,14 +65,14 @@ namespace SmallRobots {
 
 
         void on_enter_connecting() {
-            if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFiStateMachine: connecting to Wifi...");
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: connecting to Wifi...");
             checkWiFi();
             retries++;
         };
 
         void on_enter_connected() {
             retries = 0;
-            if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFiStateMachine: Wifi connected");
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: Wifi connected");
             // load robot configuration from server TODO move all this stuff somewhere better!
             if (first_connection) {
                 //robot_config.loadDefaultsFromServer();
@@ -88,12 +88,12 @@ namespace SmallRobots {
         };
 
         void on_enter_disconnected() {
-            if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFiStateMachine: WiFi is disconnected. Reconnecting in " + String(WIFI_RECONNECT_INTERVAL) + " seconds...");
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi is disconnected. Reconnecting in " + String(WIFI_RECONNECT_INTERVAL) + " seconds...");
             event_bus.emit("wifi_disconnected");    
         };
 
         void on_enter_failed() {
-            if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFiStateMachine: WiFi has failed");
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi has failed");
             event_bus.emit("wifi_failed");
         };
 
@@ -106,7 +106,7 @@ namespace SmallRobots {
             // TODO check ssid is set
             // TODO check hostname is set and default it if not
             WiFi.setHostname(hostname.c_str());
-            if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Hostname: " + hostname);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Hostname: " + hostname);
             // function pointer to event handler method? or use lambda and reference to static instance?
             using namespace std::placeholders;
             WiFiEventFuncCb func = std::bind(&WiFiStateMachine::onWifiEvent, this, std::placeholders::_1, std::placeholders::_2);
@@ -130,7 +130,6 @@ namespace SmallRobots {
         bool ota = true;
         uint8_t retries = 0;
 
-        Print* wifi_msg_stream = nullptr;
 
     protected:
         AsyncUDP udp;
@@ -143,24 +142,24 @@ namespace SmallRobots {
             wl_status_t wifiStatus = WiFi.status();
             switch (wifiStatus) {
                 case WL_NO_SSID_AVAIL:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Can't find network with SSID: " + WiFi.SSID());
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Can't find network with SSID: " + WiFi.SSID());
                     break;
                 case WL_CONNECTED:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Already connected to WiFi");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Already connected to WiFi");
                     break;
                 case WL_CONNECT_FAILED:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFi connection failed.");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFi connection failed.");
                     // fall through and try again
                 case WL_IDLE_STATUS:
                 case WL_CONNECTION_LOST:
                 case WL_DISCONNECTED:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->print("Connecting to WiFi ");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(ssid);
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Connecting to WiFi ");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(ssid);
                     WiFi.begin(ssid.c_str(), password.c_str());
                     break;
                 case WL_SCAN_COMPLETED:
                 default:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Unexpected wl_status_t: "+String(wifiStatus));
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Unexpected wl_status_t: "+String(wifiStatus));
                     break;
             }
         };
@@ -178,25 +177,25 @@ namespace SmallRobots {
                     break;
                 case ARDUINO_EVENT_WIFI_STA_AUTHMODE_CHANGE:
                 case ARDUINO_EVENT_WIFI_STA_CONNECTED:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->print("Connected to ");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(WiFi.SSID());
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Connected to ");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.SSID());
                     break;
                 case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
                     machine.trigger("ev_disconnected");
                     break;
                 case ARDUINO_EVENT_WIFI_STA_GOT_IP:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->print("IP address: ");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(WiFi.localIP());
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("IP address: ");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.localIP());
                     machine.trigger("ev_connected");
                     break;
                 case ARDUINO_EVENT_WIFI_STA_LOST_IP:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("WiFi lost IP address.");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(WiFi.localIP());
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFi lost IP address.");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(WiFi.localIP());
                     machine.trigger("ev_disconnected");
                     break;                
                 default:
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->print("Unexpected WiFi event: ");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(event);
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Unexpected WiFi event: ");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(event);
                     break;
             }
         };
@@ -206,13 +205,13 @@ namespace SmallRobots {
         void startNetwork() {
             // start UDP
             if (udp.listen(port)) { // TODO perhaps put this under control of state machine, or RobotControl class
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->print("Listening on udp port ");
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->println(port);
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Listening on udp port ");
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(port);
                 AuPacketHandlerFunction func = std::bind(&SmallRobotControl::onPacket, &osc_control, std::placeholders::_1);
                 udp.onPacket(func);
             }
             else {
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("ERROR: Failed to listen on udp port");
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("ERROR: Failed to listen on udp port");
                 // TODO trigger failed?
                 return;
             }
@@ -220,11 +219,11 @@ namespace SmallRobots {
             // start OTA
             if (ota) {
                 startOTA();
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Available for OTA.");
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Available for OTA.");
             }
 
             if (!MDNS.begin(hostname.c_str()))
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Bonjour registration error!");
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Bonjour registration error!");
             else {
                 MDNS.addService("robot_control", "udp", port);
                 #if defined(FIRMWARE_VERSION)
@@ -232,7 +231,7 @@ namespace SmallRobots {
                 #endif
                 if (ota) 
                     MDNS.enableArduino(); // advertise OTA
-                if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Registered in bonjour.");
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Registered in bonjour.");
             }
         };
 
@@ -249,23 +248,23 @@ namespace SmallRobots {
                     else // U_SPIFFS
                         type = "filesystem";
                     // NOTE: if updating SPIFFS this would be the place to unmount SPIFFS using SPIFFS.end()
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("OTA update starting " + type);
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("OTA update starting " + type);
                 })
                 .onEnd([this]() {
                     MDNS.disableArduino();
                     mdns_service_remove("_robot_control","_udp");
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("\nOTA update completed");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("\nOTA update completed");
                 })
                 .onProgress([this](unsigned int progress, unsigned int total) {
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->printf("OTA progress: %u%%\n", (progress / (total / 100)));
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->printf("OTA progress: %u%%\n", (progress / (total / 100)));
                 })
                 .onError([this](ota_error_t error) {
-                    if (wifi_msg_stream!=nullptr) wifi_msg_stream->printf("OTA error[%u]: ", error);
-                    if (error == OTA_AUTH_ERROR) if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Auth Failed");
-                    else if (error == OTA_BEGIN_ERROR) if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Begin Failed");
-                    else if (error == OTA_CONNECT_ERROR) if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Connect Failed");
-                    else if (error == OTA_RECEIVE_ERROR) if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("Receive Failed");
-                    else if (error == OTA_END_ERROR) if (wifi_msg_stream!=nullptr) wifi_msg_stream->println("End Failed");
+                    if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->printf("OTA error[%u]: ", error);
+                    if (error == OTA_AUTH_ERROR) if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Auth Failed");
+                    else if (error == OTA_BEGIN_ERROR) if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Begin Failed");
+                    else if (error == OTA_CONNECT_ERROR) if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Connect Failed");
+                    else if (error == OTA_RECEIVE_ERROR) if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Receive Failed");
+                    else if (error == OTA_END_ERROR) if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("End Failed");
                 })
                 .setHostname(hostname.c_str())
                 .setMdnsEnabled(false);

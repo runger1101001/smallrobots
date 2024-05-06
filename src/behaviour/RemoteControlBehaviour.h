@@ -25,7 +25,7 @@ namespace SmallRobots {
                 });
                 osc_control.addCommand("/rotate", [this](OSCMessage& msg) {
                     lastCommand = millis();
-                    float speed = msg.getFloat(0);
+                    speed = msg.getFloat(0);
                     radius = RADIUS_STREIGHT;
                     kinematics.rotate(speed);
                 });

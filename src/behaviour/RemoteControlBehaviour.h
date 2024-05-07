@@ -26,12 +26,12 @@ namespace SmallRobots {
                 osc_control.addCommand("rotate", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     speed = msg.getFloat(0);
-                    radius = RADIUS_STREIGHT;
+                    radius = 0.0f;
                     kinematics.rotate(speed);
                 });
                 osc_control.addCommand("stop", [this](OSCMessage& msg) {
                     lastCommand = millis();
-                    speed = 0;
+                    speed = 0.0f;
                     radius = RADIUS_STREIGHT;
                     kinematics.stop();
                 });

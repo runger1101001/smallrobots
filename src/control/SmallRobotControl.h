@@ -54,6 +54,6 @@ namespace SmallRobots {
   };
 
 
-  extern SmallRobots::SmallRobotControl osc_control;
+  extern SmallRobotControl osc_control;
 
 };

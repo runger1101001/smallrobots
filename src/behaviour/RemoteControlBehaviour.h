@@ -11,7 +11,7 @@ namespace SmallRobots {
     class RemoteControlBehaviour : public Behaviour {
         public:
             RemoteControlBehaviour(DifferentialKinematics& drive) : Behaviour(100), kinematics(drive) {
-                osc_control.addCommand("/move", [this](OSCMessage& msg) {
+                osc_control.addCommand("move", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     speed = msg.getFloat(0);
                     if (msg.size() > 1) {
@@ -23,13 +23,13 @@ namespace SmallRobots {
                         kinematics.move(speed);
                     }
                 });
-                osc_control.addCommand("/rotate", [this](OSCMessage& msg) {
+                osc_control.addCommand("rotate", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     speed = msg.getFloat(0);
                     radius = RADIUS_STREIGHT;
                     kinematics.rotate(speed);
                 });
-                osc_control.addCommand("/stop", [this](OSCMessage& msg) {
+                osc_control.addCommand("stop", [this](OSCMessage& msg) {
                     lastCommand = millis();
                     speed = 0;
                     radius = RADIUS_STREIGHT;
@@ -38,7 +38,7 @@ namespace SmallRobots {
             };
             virtual Behaviour* run() {
                 unsigned long now = millis();
-                if (now - lastCommand > idleTime && speed != 0) {
+                if (idleTime > 0 && now - lastCommand > idleTime && speed != 0) {
                     speed = 0;
                     radius = RADIUS_STREIGHT;
                     kinematics.stop();

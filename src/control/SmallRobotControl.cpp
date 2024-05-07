@@ -88,7 +88,7 @@ namespace SmallRobots {
                     // process behaviour message
                     pos2 = msg.match("/behaviour", pos);
                     if (pos2>=pos) {
-                        String behaviour = String(&msg.getAddress()[pos2+10]);
+                        String behaviour = String(&msg.getAddress()[pos2+9]);
                         if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("OSC behaviour: "+behaviour);
                         // TODO process behaviour
                         return; // we're done with the behaviour message
@@ -96,7 +96,7 @@ namespace SmallRobots {
                     // process control message
                     pos2 = msg.match("/command", pos);
                     if (pos2>=pos) {
-                        String command = String(&msg.getAddress()[pos2+8]);
+                        String command = String(&(msg.getAddress()[pos2+6]));
                         // process command
                         if (commands.find(command) != commands.end()) { 
                             if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Invoking OSC command: "+command);

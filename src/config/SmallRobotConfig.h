@@ -82,6 +82,10 @@ namespace SmallRobots {
             return this == &other;
         };
 
+        bool operator!= (const SmallRobotParameter& other) {
+            return this != &other;
+        };
+
         SmallRobotParameterType type;
         String name;
 

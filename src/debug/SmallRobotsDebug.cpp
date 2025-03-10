@@ -2,6 +2,8 @@
 #include "SmallRobotsDebug.h"
 
 namespace SmallRobots {
+    
+    SmallRobots::Debug smallrobots_debug;
 
     Debug::Debug() {
         for (int i = 0; i < SMALLROBOTS_DEBUG_MAX_CHANNELS; i++) {

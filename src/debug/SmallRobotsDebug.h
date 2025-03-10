@@ -27,6 +27,6 @@ namespace SmallRobots {
     };
 
 
-
+    extern SmallRobots::Debug smallrobots_debug;
 
 };

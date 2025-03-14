@@ -24,7 +24,7 @@ namespace simplefoc {
 
     #define TELEMETRY_MAX_BUFFER_SIZE 256
 
-    class SerialTelemetryMaster {
+    class SerialTelemetryMaster : public SerialCommanderMaster {
         public:
             SerialTelemetryMaster();
 
@@ -34,13 +34,15 @@ namespace simplefoc {
 
             void setDebugHandler(void (*handler)(char*, uint8_t));
             void setTelemetryHandler(void (*handler)());
+            void setOnSyncHandler(void (*handler)());
 
             void setTelemetryRegisters();
         protected:
             Stream* _stream;
             uint8_t _buffer[TELEMETRY_MAX_BUFFER_SIZE];
-            void (*_debugFunc)(char*, uint8_t);
-            void (*_telemetryFunc)();
+            void (*_debugFunc)(char*, uint8_t) = nullptr;
+            void (*_telemetryFunc)() = nullptr;
+            void (*_onSyncFunc)() = nullptr;
 
             // StateMachine machine;
 

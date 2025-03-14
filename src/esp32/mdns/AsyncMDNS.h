@@ -31,7 +31,7 @@ namespace SmallRobots {
             }
 
             static bool lookup(const char* service, const char* proto) {
-                mdns_search_once_t *s = mdns_query_async_new(NULL, service, proto, MDNS_TYPE_ANY, 3000, 100, process_results);
+                mdns_search_once_t *s = mdns_query_async_new(NULL, service, proto, MDNS_TYPE_SRV, 3000, 10, process_results);
                 return (s!=NULL);
             };
             

@@ -26,6 +26,7 @@ SerialTelemetryMaster::SerialTelemetryMaster() {
 
 void SerialTelemetryMaster::begin(Stream &serial) {
     _stream = &serial;
+    SerialCommanderMaster::begin(serial);
 }
 
 void SerialTelemetryMaster::run() {
@@ -33,7 +34,10 @@ void SerialTelemetryMaster::run() {
         size_t bytes = _stream->available();
         if (bytes > sizeof(_buffer)) bytes = sizeof(_buffer);
         size_t actbytes = _stream->readBytes(_buffer, bytes);
-        // processBytes(_buffer, actbytes);
+        // TODO processBytes(_buffer, actbytes);
+        // for the moment, just send everything we get to debug...
+        if (_debugFunc)
+            _debugFunc((char*)_buffer, actbytes);
     }
 }
 
@@ -45,5 +49,8 @@ void SerialTelemetryMaster::setTelemetryHandler(void (*handler)()) {
     _telemetryFunc = handler;
 }
 
+void SerialTelemetryMaster::setOnSyncHandler(void (*handler)()) {
+    _onSyncFunc = handler;
+}
 
 }; // namespace simplefoc

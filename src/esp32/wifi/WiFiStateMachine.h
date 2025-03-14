@@ -79,11 +79,7 @@ namespace SmallRobots {
                 first_connection = false;
             }
             startNetwork();
-            // initialize startup behaviour
-            // String bname = robot_config["startupBehaviour"];
-            // Behaviour* b = engine.find(bname); // TODO simplify, just start it by name
-            // if (b!=nullptr)
-            //     engine.add(b);
+            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: Network up");
             event_bus.emit("wifi_connected");
         };
 
@@ -120,6 +116,7 @@ namespace SmallRobots {
 
         void tick() {
             machine.tick();
+            if (ota && machine==connected) ArduinoOTA.handle();
         };
 
 

@@ -31,8 +31,14 @@ namespace SmallRobots {
             }
 
             static bool lookup(const char* service, const char* proto) {
-                mdns_search_once_t *s = mdns_query_async_new(NULL, service, proto, MDNS_TYPE_SRV, 3000, 10, process_results);
-                return (s!=NULL);
+                // mdns_search_once_t *s = mdns_query_async_new(NULL, service, proto, MDNS_TYPE_SRV, 3000, 10, process_results);
+                // return (s!=NULL);
+                mdns_browse_t* b = mdns_browse_new(service, proto, process_browse);
+                return (b!=NULL);
+            };
+
+            static bool cancel_lookup(const char* service, const char* proto) {
+                return (mdns_browse_delete(service, proto)==ESP_OK);
             };
             
         protected:
@@ -58,6 +64,25 @@ namespace SmallRobots {
                 }
                 mdns_query_results_free(results);
                 mdns_query_async_delete(search);
+            };
+
+
+            static void process_browse(mdns_result_t *results){
+                if (results!=NULL) {
+                    mdns_ip_addr_t * a = results->addr;
+                    while(a){
+                        if(a->addr.type == IPADDR_TYPE_V6){
+                        } else {
+                            MDNSLookupResult result;
+                            result.service = results->service_type;
+                            result.port = results->port;
+                            esp_ip4addr_ntoa(&a->addr.u_addr.ip4, result.ip, sizeof(result.ip));
+                            callback(result);
+                        }
+                        a = a->next;
+                    }
+                }
+                mdns_query_results_free(results);
             };
 
     };

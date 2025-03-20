@@ -43,7 +43,8 @@ namespace SmallRobots {
             static MDNSLookupCallback callback;
 
             static void process_browse(mdns_result_t *results){
-                if (results!=NULL) {
+                mdns_result_t *r = results;
+                while (r) {
                     mdns_ip_addr_t * a = results->addr;
                     while(a){
                         if(a->addr.type == IPADDR_TYPE_V6){
@@ -52,10 +53,24 @@ namespace SmallRobots {
                             result.service = results->service_type;
                             result.port = results->port;
                             esp_ip4addr_ntoa(&a->addr.u_addr.ip4, result.ip, sizeof(result.ip));
-                            callback(result);
+                            xTaskCreate(
+                                [](void* p){
+                                    MDNSLookupResult* r = (MDNSLookupResult*)p;
+                                    AsyncMDNS::callback(*r);
+                                    delete r;
+                                    vTaskDelete(NULL);
+                                },
+                                "mdns_callback",
+                                4096,
+                                new MDNSLookupResult(result),
+                                1,
+                                NULL
+                            );
+                            //callback(result);
                         }
                         a = a->next;
                     }
+                    r = r->next;
                 }
                 mdns_query_results_free(results);
             };

@@ -25,6 +25,9 @@ namespace SmallRobots {
 #define WIFI_RECONNECT_RETRIES 3
 
 #define UDP_PORT 48048
+#define UDP_PORT_SEND 48049
+
+AsyncUDP udp; //global to send OSC Messages
 
     class WiFiStateMachine {
     public:
@@ -124,12 +127,13 @@ namespace SmallRobots {
         String ssid = (const char*)nullptr;
         String password = (const char*)nullptr;
         int port = UDP_PORT;
+        int send_port = UDP_PORT_SEND;
         bool ota = true;
         uint8_t retries = 0;
 
 
     protected:
-        AsyncUDP udp;
+        
         bool first_connection = false;
 
 
@@ -205,6 +209,7 @@ namespace SmallRobots {
                 if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(port);
                 AuPacketHandlerFunction func = std::bind(&SmallRobotControl::onPacket, &osc_control, std::placeholders::_1);
                 udp.onPacket(func);
+                
             }
             else {
                 if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("ERROR: Failed to listen on udp port");

@@ -1,9 +1,8 @@
 #include "Arduino.h"
 #include "./Behaviours.h"
-#include "../control/SmallRobotControl.h"
 #include "../control/SmallRobotEventBus.h"
 #include "SmallRobotDebug.h"
-#include <OSCMessage.h>
+
 
 
 namespace SmallRobots {
@@ -14,20 +13,7 @@ namespace SmallRobots {
     BehaviourEngine::BehaviourEngine(){};
 
     void BehaviourEngine::init(){
-        osc_control.addCommand("/start-behaviour", [this](OSCMessage& msg){
-            char name[32];
-            msg.getString(0, name, 32); // TODO error checking
-            Behaviour* behaviour = find(name);
-            if (behaviour)
-                add(behaviour);
-        });
-        osc_control.addCommand("/stop-behaviour", [this](OSCMessage& msg){
-            char name[32];
-            msg.getString(0, name, 32);
-            Behaviour* behaviour = find(name);
-            if (behaviour)
-                remove(behaviour);
-        });
+  
     };
 
 

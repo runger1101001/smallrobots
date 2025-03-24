@@ -1,5 +1,6 @@
 
 #include "./SmallRobotConfig.h"
+#include "math.h"
 
 namespace SmallRobots {
 

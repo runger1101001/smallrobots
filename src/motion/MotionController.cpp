@@ -190,7 +190,7 @@ namespace SmallRobots {
     };
 
     void MotionController::enableMotors(){
-        kinematics.enable();
+        kinematics.start();
     };
 
     void MotionController::setRobotVelocity( float _vRobot){ //in mm/s

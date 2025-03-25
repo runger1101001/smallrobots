@@ -6,27 +6,16 @@
 #include "Arduino.h"
 #include "./config/globalStructs.h"
 
-#include <SimpleFOC.h>
-#include "encoders/sc60228/MagneticSensorSC60228.h"
-
-#define ZOOIDBOT_WHEELBASE 52.6  //mm org: 0.55 dm
-#define ZOOIDBOT_WHEEL_D   30.6  //mm org: 0.31 dm 
 
 #define RADIUS_STREIGHT (std::numeric_limits<float>::infinity())
-#define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why?
-
-extern MagneticSensorSC60228 sensorL;
-extern MagneticSensorSC60228 sensorR;
-extern BLDCMotor motorL;
-extern BLDCMotor motorR;
-
+#define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why? TODO SET AUTOMATICALLY FROM ZOOIDDRIVE
 
 namespace SmallRobots {
 
 
     class DifferentialKinematics {
         public:
-            DifferentialKinematics(float _wheel_base= ZOOIDBOT_WHEELBASE, float wheel_diameter = ZOOIDBOT_WHEEL_D);
+            DifferentialKinematics(float _wheel_base, float wheel_diameter);
             ~DifferentialKinematics();
 
             //move
@@ -43,17 +32,17 @@ namespace SmallRobots {
             void turnLeftBackward(float speed, float radius);
             void turnRightBackward(float speed, float radius);
 
-            void rotate(float speed);
+            virtual void rotate(float speed);
 
-            void setSpeed(float left, float right);
-            void stop();
-            void enable();
-            void disable();
+            virtual void setSpeed(float left, float right)=0;
+            virtual void stop()=0;
+            virtual void start()=0;
+
+            virtual MotorsPosition getMotorsPosition()=0;
+            virtual MotorsVelocity getMotorsVelocity()=0;
+
 
             Pose wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose,String curDirName);
-
-            MotorsPosition getMotorsPosition();
-            MotorsVelocity getMotorsVelocity();
 
             float wheel_base;
             float half_wheel_base;

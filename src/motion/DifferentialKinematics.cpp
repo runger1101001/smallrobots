@@ -15,49 +15,8 @@ namespace SmallRobots {
     DifferentialKinematics::~DifferentialKinematics() {
     };
 
-
-    void DifferentialKinematics::setSpeed(float left, float right){
-        motorL.target =left;
-        motorR.target =right;
-        
-    };
-    void DifferentialKinematics::stop(){
-        this->setSpeed(0,0);
-        this->disable();
-    };
-    void DifferentialKinematics::enable(){
-        motorL.enable();
-        motorR.enable();
-    };
-    void DifferentialKinematics::disable(){
-        motorL.disable();
-        motorR.disable();
-    };
-
-    MotorsPosition DifferentialKinematics::getMotorsPosition(){
-
-        MotorsPosition pos;
-        // float pL = motorL.sensor->getFullRotations();
-        // float aL = motorL.sensor->getMechanicalAngle();
-        // float pR = motorR.sensor->getFullRotations();
-        // float aR = motorR.sensor->getMechanicalAngle();
-        // left = aL + _2PI * pL;
-        // right = aR + _2PI * pR;
-
-        pos.left_turns = (uint32_t)motorL.sensor->getFullRotations() * motorL.sensor_direction;
-        pos.left =  motorL.sensor->getMechanicalAngle() * motorL.sensor_direction;
-
-        pos.right_turns = (uint32_t)motorR.sensor->getFullRotations() * motorR.sensor_direction;
-        pos.right =  motorR.sensor->getMechanicalAngle() * motorR.sensor_direction;
-
-        return pos;
-    };
-    MotorsVelocity DifferentialKinematics::getMotorsVelocity(){
-        MotorsVelocity vel;
-        vel.left = motorL.shaft_velocity;
-        vel.right = motorR.shaft_velocity;
-        return vel;
-    };
+    
+   
 
     void DifferentialKinematics::move(float speed, float radius) { //negative radius + negative speed when leftturn = counterclockwise
         

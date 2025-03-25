@@ -30,11 +30,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
+            smallrobots_debug.println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
+            if (debug) smallrobots_debug.println("Added parameter "+name);
     };
 
 
@@ -44,11 +44,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
+            smallrobots_debug.println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
+            if (debug) smallrobots_debug.println("Added parameter "+name);
     };
 
 
@@ -58,11 +58,11 @@ namespace SmallRobots {
         SmallRobotParameter* p = new SmallRobotParameter(name, value);
         auto result = params.emplace(name, p);
         if (result.second==false) {
-            if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WARN: could not add parameter "+name);
+            smallrobots_debug.println("WARN: could not add parameter "+name);
             delete p;
         }
         else
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Added parameter "+name);
+            if (debug) smallrobots_debug.println("Added parameter "+name);
     };
 
 

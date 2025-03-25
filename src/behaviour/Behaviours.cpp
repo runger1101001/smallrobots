@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "./Behaviours.h"
 #include "../control/SmallRobotEventBus.h"
-#include "SmallRobotDebug.h"
+#include "../debug/SmallRobotsDebug.h"
 
 
 
@@ -20,9 +20,9 @@ namespace SmallRobots {
     void BehaviourEngine::add(Behaviour* behaviour){
         if (behaviour != NULL) {
             if (behaviours.insert(behaviour).second){
-                if (debug && smallrobot_debug_print!=nullptr){
-                    smallrobot_debug_print->print("Starting: ");
-                    smallrobot_debug_print->println(behaviour->getName());
+                if (debug){
+                    smallrobots_debug.print("Starting: ");
+                    smallrobots_debug.println(behaviour->getName());
                 }
             }
         }
@@ -30,9 +30,9 @@ namespace SmallRobots {
     void BehaviourEngine::remove(Behaviour* behaviour){
         if (behaviour != NULL) {
             behaviours.erase(behaviour);
-            if (debug && smallrobot_debug_print!=nullptr){
-                smallrobot_debug_print->print("Finished: ");
-                smallrobot_debug_print->println(behaviour->getName());
+            if (debug){
+                smallrobots_debug.print("Finished: ");
+                smallrobots_debug.println(behaviour->getName());
             }
         }
     };

@@ -5,7 +5,7 @@
 #include <map>
 #include <set>
 
-#include "SmallRobotDebug.h"
+#include "../debug/SmallRobotsDebug.h"
 
 
 
@@ -58,21 +58,21 @@ namespace SmallRobots {
 
 
         SmallRobotParameter& operator=(float value) {
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting float param "+name+" to "+String(value));
+            if (debug) smallrobots_debug.println("Setting float param "+name+" to "+String(value));
             f = value;
             return *this;
         };
 
 
         SmallRobotParameter& operator=(int32_t value) {
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting int param "+name+" to "+String(value));
+            if (debug) smallrobots_debug.println("Setting int param "+name+" to "+String(value));
             i = value;
             return *this;
         };
 
 
         SmallRobotParameter& operator=(String value) {
-            if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Setting string param "+name+" to "+value);
+            if (debug) smallrobots_debug.println("Setting string param "+name+" to "+value);
             *s = value;
             return *this;
         };

@@ -27,8 +27,6 @@ namespace SmallRobots {
 #define UDP_PORT 48048
 #define UDP_PORT_SEND 48049
 
-AsyncUDP udp; //global to send OSC Messages
-
     class WiFiStateMachine {
     public:
         StateMachine machine;        
@@ -133,7 +131,7 @@ AsyncUDP udp; //global to send OSC Messages
 
 
     protected:
-        
+        AsyncUDP udp; //global to send OSC Messages
         bool first_connection = false;
 
 
@@ -209,7 +207,6 @@ AsyncUDP udp; //global to send OSC Messages
                 if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(port);
                 AuPacketHandlerFunction func = std::bind(&SmallRobotControl::onPacket, &osc_control, std::placeholders::_1);
                 udp.onPacket(func);
-                
             }
             else {
                 if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("ERROR: Failed to listen on udp port");

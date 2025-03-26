@@ -2,17 +2,26 @@
 
 #include <stdint.h>
 #include <limits>
-#include "Arduino.h"
-#include "../config/globalStructs.h"
-#include "DifferentialKinematics.h"
-#include "DifferentialPathPlanner.h"
+#include <Arduino.h>
+#include "./Vector.h"
+#include "./DifferentialKinematics.h"
+#include "./DifferentialPathPlanner.h"
 
 #define DEFAULT_ROBOT_SPEED 100 //mm/s
 #define DEFAULT_PATH_RADIUS 50 //mm
 
 namespace SmallRobots {
 
+    enum PATHBEHAVIOURS {
+        PAUSE,
+        LOOP,
+        END,
+        CONTINUE,
+        RESTART,
+    };
 
+
+    
     class MotionController {
 
         protected:

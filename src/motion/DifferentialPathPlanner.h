@@ -3,9 +3,9 @@
 
 #include <stdint.h>
 #include <limits>
-#include "Arduino.h"
-#include "./config/globalStructs.h"
-#include "DifferentialKinematics.h"
+#include <Arduino.h>
+#include "./Vector.h"
+#include "./DifferentialKinematics.h"
 
 namespace SmallRobots {
 

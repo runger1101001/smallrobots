@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Arduino.h"
-#include "DifferentialKinematics.h"
+#include <Arduino.h>
+#include "./DifferentialKinematics.h"
 
 
 namespace SmallRobots {

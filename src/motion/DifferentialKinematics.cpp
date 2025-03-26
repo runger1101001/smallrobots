@@ -1,4 +1,4 @@
-#include "DifferentialKinematics.h"
+#include "./DifferentialKinematics.h"
 
 namespace SmallRobots {
 

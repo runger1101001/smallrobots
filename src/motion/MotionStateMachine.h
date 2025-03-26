@@ -1,12 +1,11 @@
 #pragma once
-#include "Arduino.h"
-#include "../config/SmallRobotConfig.h"
 
+#include <Arduino.h>
+#include "config/SmallRobotConfig.h"
 #include "control/SmallRobotEventBus.h"
-
 #include "StateMachine.h"
-#include "MotionController.h"
-#include "Odometry.h"
+#include "./MotionController.h"
+#include "./Odometry.h"
 
 #define ODOMETRY_UPDATE_RATE_TIMEOUT 10 //ms
 

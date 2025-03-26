@@ -1,20 +1,17 @@
-#include "globalStructs.h"
-
-
-
+#include "Vector.h"
 
 namespace SmallRobots {
 
 
-  Vector::Vector (float x, float y, float z){
-    this->x = x;
-    this->y = y;
-    this->z = z;
+Vector::Vector (float x, float y, float z){
+  this->x = x;
+  this->y = y;
+  this->z = z;
+};
 
-  };
+// TODO make all these functions member functions of the Vector class 
 
-Vector rotation (Vector& dir, float& angle)
-{
+Vector rotation (Vector& dir, float& angle) {
   float r = (angle);
   float xx  =  dir.x * cos ((r)) -  dir.y * sin ((r));
   float yy = dir.x * sin ((r)) +  dir.y * cos ((r));

@@ -89,61 +89,23 @@ namespace SmallRobots {
     };
 
 
-    Pose DifferentialKinematics::wheelVelToNextPose (float vL, float vR, int deltaT, Pose lastPose, String curDirName){
-        
-        //Serial.println("vL: " + (String) vL + " , vR: " + (String) vR);
+    Pose DifferentialKinematics::getDeltaPose(unsigned long deltaT, Pose lastPose){ //delataT in micros as SimpleFoc reads velocity /micros ?!
 
-        vR = -vR; //the way motors are mounted
-
-        vL = vL * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
-        vR = vR * wheel_radius;
-
-        // float aV = (vR-vL)/wheel_base;//angular velocity of robot
-        // float R = half_wheel_base *(vR + vL)/(vR - vL); //R = distance from ICR to the center of the robot
-
-        //Serial.println ("R: " + (String) R + "mm");
-        //Serial.println ("angular velocity: " + (String) aV + "unit?");
-
-        // float V = (vR + vL)/2.0 ; //instantaneous velocity V of the point midway between the robot's wheels
-
-        //Serial.println ("instantaneous velocity midway between wheels: " + (String) V + "unit?");
-
-
-        deltaTseconds = deltaT / 1000.0f;
-        //Serial.println("deltaTseconds: " +  (String) deltaTseconds);
-
-        // float theta = lastPose.angle;
-        // float L = half_wheel_base;
-
-        float deltaSR = vR*deltaTseconds;
-        float deltaSL = vL*deltaTseconds;
-
-        // float deltaTheta = (deltaSR-deltaSL)/(2*L);
-        // float deltaS = (deltaSR+deltaSL)/2.0;
-
-        // float deltaX = deltaS * cos(theta + deltaTheta/2.0);
-        // float deltaY = deltaS * sin(theta + deltaTheta/2.0);
-    
-
-        //R is distance to outside wheel
-        //WORKS
-        // pose.x = lastPose.x +  (deltaSR+deltaSL)/2.0 * cos(lastPose.angle + (deltaSR-deltaSL)/(4*half_wheel_base)) ;
-        // pose.y = lastPose.y +  (deltaSR+deltaSL)/2.0 * sin(lastPose.angle + (deltaSR-deltaSL)/(4*half_wheel_base)) ;
-        // pose.angle = lastPose.angle + (deltaSR-deltaSL)/(2*half_wheel_base);
-         
-        //Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
+        MotorsVelocity vel = getMotorsVelocity();
+        float vR = -vel.right * wheel_radius;  //negative because of the way motors are mounted
+        float vL = vL * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
        
+        float deltaSR = vR*deltaT;
+        float deltaSL = vL*deltaT;
 
-        //R is distance to robot center
-        pose.x = lastPose.x + (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;
-        pose.y = lastPose.y + (deltaSR+deltaSL)/2.0  * sin( lastPose.angle  ) ;
-        pose.angle = lastPose.angle + (deltaSR-deltaSL)/(2*half_wheel_base);
-
-        Serial.println ("pose : " + (String) pose.x+ ", " +(String) pose.y+ ", " + (String) degrees(pose.angle)) ;
-  
-        return pose;
-    };
-
+        Pose deltaPose;
+        deltaPose.x = (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;
+        deltaPose.y = (deltaSR+deltaSL)/2.0  * sin( lastPose.angle  ) ;
+        deltaPose.angle = (deltaSR-deltaSL)/(2*half_wheel_base);
+    
+        return deltaPose;
+    }
+   
     void DifferentialKinematics::setCurRobotSpeed(float _curRobotSpeed){
         curRobotSpeed = _curRobotSpeed;
     };

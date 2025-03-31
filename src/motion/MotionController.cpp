@@ -76,7 +76,7 @@ namespace SmallRobots {
         // Serial.println ("3.) -"+ pathPlanner.arcDirName2+ "- with angle: "+ degrees (pathPlanner.arcAngle2)+ "°, around center: "+ pathPlanner.arcCenter2.x +"," + pathPlanner.arcCenter2.y);
 
         ICC = pathPlanner.arcCenter1;
-        Serial.println ("ICC: " + (String) ICC.x +  " , " + (String) ICC.y);
+        //Serial.println ("ICC: " + (String) ICC.x +  " , " + (String) ICC.y);
         curV = Vector (curPose.x, curPose.y);
         // Serial.println("curV: " +  (String) curV.x + " , " + (String) curV.y);
 
@@ -110,7 +110,7 @@ namespace SmallRobots {
     void MotionController::setWheelVelocitiesSeg2() //STRAIGHT or left or right ARC
     {
 
-        Serial.println ("Set wheel velocities segment 2(3) of path.");
+        //Serial.println ("Set wheel velocities segment 2(3) of path.");
 
         curDirName = pathPlanner.arcDirName12;
 

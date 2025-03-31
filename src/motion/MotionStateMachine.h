@@ -5,9 +5,9 @@
 #include "control/SmallRobotEventBus.h"
 #include "StateMachine.h"
 #include "./MotionController.h"
-#include "./Odometry.h"
+#include "./localisation/Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 10 //ms
+#define M_ODOMETRY_UPDATE_RATE_TIMEOUT 10 //ms
 
 namespace SmallRobots {
 
@@ -67,8 +67,7 @@ namespace SmallRobots {
             moving.enter = std::bind(&MotionStateMachine::on_enter_moving, this);
             idle.enter =  std::bind(&MotionStateMachine::on_enter_idle, this);
 
-            //waiting.timeout = ODOMETRY_UPDATE_RATE_TIMEOUT;
-            moving.timeout = ODOMETRY_UPDATE_RATE_TIMEOUT;
+            moving.timeout = M_ODOMETRY_UPDATE_RATE_TIMEOUT;
 
             moving2idle.on = std::bind(&MotionStateMachine::on_pause, this);
             idle2new_target_pose.on =  std::bind(&MotionStateMachine::on_go, this);
@@ -93,7 +92,7 @@ namespace SmallRobots {
         {
             if (first_on) {
                 // Serial.println("Motion idle -  disable Motors");
-                ctrl.stop();
+                //ctrl.stop();
                 first_on = false;
             }
 
@@ -101,21 +100,23 @@ namespace SmallRobots {
 
         void on_enter_new_target_pose() { 
             
-            // Serial.println("ctrl.setTarget()");
+            Serial.println("ctrl.setTarget()");
             ctrl.setTarget();                          
 
-            // Serial.println("odometry.resetLastTime()");
+            Serial.println("odometry.resetLastTime()");
             odometry.resetLastTime();     
 
-            // Serial.println("ctrl.setWheelVelocitiesSeg1()");
-            ctrl.setWheelVelocitiesSeg1();              
+            Serial.println("ctrl.setWheelVelocitiesSeg1()");
+            ctrl.setWheelVelocitiesSeg1();        
+            
+            //reset subPathIndex
+            Serial.println("reset subPathIndex to 0");
+            subPathIndex = 0;
 
-            // Serial.println("machine.trigger(start_seg1)");
+            Serial.println("machine.trigger(start_seg1)");
             machine.trigger("start_seg1");             
 
-            //reset subPathIndex
-            // Serial.println("reset subPathIndex to 0");
-            subPathIndex = 0;
+            
         };
 
         void on_enter_arrived_at_tangentA() { 
@@ -160,7 +161,7 @@ namespace SmallRobots {
             //no -> repeat this state
             //yes -> move to next state 
            
-            odometry.updatePose(ctrl.curDirName);          //seems to work
+            odometry.updatePose();          //seems to work
 
             Pose curPose = odometry.getCurPose();
             
@@ -169,23 +170,22 @@ namespace SmallRobots {
             
             ctrl.setCurPose(curPose);
             if (ctrl.checkIfArrived()){
-                Serial.println (subPathIndex);
+                //Serial.println (subPathIndex);
                 if (subPathIndex == 0){
-                    // Serial.println ("FINISHED SEG 1");
-                    machine.trigger("finished_seg1");
+                    Serial.println ("FINISHED SEG 1");
                     subPathIndex=1;
+                    machine.trigger("finished_seg1");
+                    
                 }
                 else if (subPathIndex == 1){
-                    // Serial.println ("FINISHED SEG 2");
-                    machine.trigger("finished_seg2");
+                    Serial.println ("FINISHED SEG 2");
                     subPathIndex=2;
-                    
+                    machine.trigger("finished_seg2");                    
                 }
                 else if (subPathIndex == 2) {
-                    // Serial.println ("FINISHED SEG 3");
-                    machine.trigger("finished_seg3");
+                    Serial.println ("FINISHED SEG 3");
                     subPathIndex=0;
-                    
+                    machine.trigger("finished_seg3");
                 }
 
                 

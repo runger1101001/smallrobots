@@ -3,6 +3,6 @@
 
 namespace SmallRobots {
 
-    MDNSLookupCallback AsyncMDNS::callback = NULL;
+    std::map<const char*, MDNSLookup> AsyncMDNS::lookups;
 
 };  // namespace SmallRobots

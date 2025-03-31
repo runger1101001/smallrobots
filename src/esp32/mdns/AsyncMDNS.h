@@ -4,76 +4,66 @@
 #if defined(ESP32)
 
 #include <ESPmDNS.h>
+#include <map>
+#include <functional>
 
 namespace SmallRobots {
 
+    struct MDNSLookup;
+
     struct MDNSLookupResult {
-        const char* service;
+        MDNSLookup* lookup;
         int port;
-        char ip[16];
+        IPAddress ip;
     };
 
+    struct MDNSLookup {
+        const char* service;
+        const char* proto;
+        std::function<void(MDNSLookupResult result)> callback;
+    };
 
-    typedef std::function<void(MDNSLookupResult result)> MDNSLookupCallback;
 
 
     class AsyncMDNS {
         public:
 
-            static bool begin(MDNSLookupCallback callback) {
-                esp_err_t err = mdns_init();
-                if (err) {
-                    // TODO debug logging via SmallRobotDebug
-                    return false;
-                }
-                AsyncMDNS::callback = callback;
+            static bool lookup(const char* service, const char* proto, std::function<void(MDNSLookupResult result)> callback) {
+                MDNSLookup lookup = {service, proto, callback};
+                lookups.emplace(service, lookup);
+                xTaskCreate(
+                    [](void* p){
+                        MDNSLookup* l = (MDNSLookup*)p;
+                        int nr = 0;
+                        while (nr<=0 && lookups.find(l->service)!=lookups.end()) { // TODO thread safety
+                            nr = MDNS.queryService(l->service, l->proto);
+                            if (nr>0) {
+                                MDNSLookupResult r = { l, MDNS.port(0), MDNS.address(0) };
+                                l->callback(r);
+                            }
+                            else 
+                                vTaskDelay(250 / portTICK_PERIOD_MS);
+                        }
+                        lookups.erase(l->service);
+                        vTaskDelete(NULL);
+                    },
+                    "mdns_callback",
+                    4096,
+                    &lookups[service],
+                    1,
+                    NULL
+                );
                 return true;
-            }
-
-            static bool lookup(const char* service, const char* proto) {
-                mdns_browse_t* b = mdns_browse_new(service, proto, process_browse);
-                return (b!=NULL);
+                // mdns_browse_t* b = mdns_browse_new(service, proto, process_browse);
+                // return (b!=NULL);
             };
 
             static bool cancel_lookup(const char* service, const char* proto) {
-                return (mdns_browse_delete(service, proto)==ESP_OK);
+                return lookups.erase(service)==1;
             };
             
         protected:
-            static MDNSLookupCallback callback;
-
-            static void process_browse(mdns_result_t *results){
-                mdns_result_t *r = results;
-                while (r) {
-                    mdns_ip_addr_t * a = results->addr;
-                    while(a){
-                        if(a->addr.type == IPADDR_TYPE_V6){
-                        } else {
-                            MDNSLookupResult result;
-                            result.service = results->service_type;
-                            result.port = results->port;
-                            esp_ip4addr_ntoa(&a->addr.u_addr.ip4, result.ip, sizeof(result.ip));
-                            xTaskCreate(
-                                [](void* p){
-                                    MDNSLookupResult* r = (MDNSLookupResult*)p;
-                                    AsyncMDNS::callback(*r);
-                                    delete r;
-                                    vTaskDelete(NULL);
-                                },
-                                "mdns_callback",
-                                4096,
-                                new MDNSLookupResult(result),
-                                1,
-                                NULL
-                            );
-                            //callback(result);
-                        }
-                        a = a->next;
-                    }
-                    r = r->next;
-                }
-                mdns_query_results_free(results);
-            };
+            static std::map<const char*, MDNSLookup> lookups;
 
     };
 

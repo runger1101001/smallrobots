@@ -6,12 +6,9 @@
 #include "StateMachine.h"
 #include "./Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 1 //ms
+#define ODOMETRY_UPDATE_RATE_TIMEOUT 1000 //ms
 
 namespace SmallRobots {
-
-   
-
 
  class OdometryStateMachine {
     public:
@@ -21,13 +18,13 @@ namespace SmallRobots {
         STATE(running);
         STATE(reset);
 
-        TRANSITION(idle2running,start_localisation, idle, running);
+        TRANSITION(idle2running,start_odometry, idle, running);
         TRANSITION(running2running, running_timeout, running, running);
-        TRANSITION(running2idle, pause_localisation, running, idle);
-        TRANSITION(running2reset, reset_running_localisation, running, reset);
-        TRANSITION(idle2reset, reset_idle_localisation, idle, reset);
-        TRANSITION(reset2idle, reset_pause_localisation, reset, idle);
-        TRANSITION(reset2running, reset_start_localisation, reset, running);
+        TRANSITION(running2idle, pause_odometry, running, idle);
+        TRANSITION(running2reset, reset_running_odometry, running, reset);
+        TRANSITION(idle2reset, reset_idle_odometry, idle, reset);
+        TRANSITION(reset2idle, reset_pause_odometry, reset, idle);
+        TRANSITION(reset2running, reset_start_odometry, reset, running);
 
 
        
@@ -76,8 +73,8 @@ namespace SmallRobots {
         {
             odometryCtrl.resetCurPose();
 
-            if (isRunning) machine.trigger("reset_start_localisation");
-            else machine.trigger("reset_pause_localisation");
+            if (isRunning) machine.trigger("reset_start_odometry");
+            else machine.trigger("reset_pause_odometry");
            
         };
 
@@ -87,6 +84,10 @@ namespace SmallRobots {
 
         void tick() {
             machine.tick();
+        };
+        void trigger(String arg)
+        {
+            machine.trigger(arg);
         };
 
 

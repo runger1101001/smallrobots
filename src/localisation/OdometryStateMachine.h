@@ -6,7 +6,7 @@
 #include "StateMachine.h"
 #include "./Odometry.h"
 
-#define ODOMETRY_UPDATE_RATE_TIMEOUT 1000 //ms
+#define ODOMETRY_UPDATE_RATE_TIMEOUT 100 //ms
 
 namespace SmallRobots {
 

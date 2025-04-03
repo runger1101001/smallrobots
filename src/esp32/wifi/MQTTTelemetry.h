@@ -25,7 +25,7 @@ namespace SmallRobots {
                 String full_topic = String(topic) + '/' + _hostname; // TODO make this more efficient!
                 if (subtopic)
                     full_topic += String("/") + subtopic;
-                //smallrobots_debug.printf("MQTT publish %s size %d\n", full_topic.c_str(), len);
+                smallrobots_debug.printf("MQTT publish %s size %d\n", full_topic.c_str(), len);
                 mqtt.publish(full_topic.c_str(), data, len);
             }
             else if (_hostname) {

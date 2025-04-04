@@ -69,7 +69,7 @@ namespace SmallRobots {
                         SmallRobotParameter& p = robot_config[param];
                         if (!(p == SmallRobotConfig::UNKNOWN_PARAM)) {
                             if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("OSC param: "+param);
-                            if (p.type==SmallRobotParameterType::T_FLOAT) // TODO move this to Param class, don't expose type here
+                            if (p.type==SmallRobotParameterType::T_FLOAT) // TODO check that param and message types match
                                 p = msg.getFloat(0);
                             else if (p.type==SmallRobotParameterType::T_INT)
                                 p = msg.getInt(0);
@@ -78,6 +78,12 @@ namespace SmallRobots {
                                 if (msg.getString(0, buff, 32)){
                                     p = String(buff);
                                 }
+                            }
+                            else if (p.type==SmallRobotParameterType::T_BOOL) {
+                                p = msg.getBoolean(0);
+                            }
+                            else {
+                                if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Unknown param type: "+param);
                             }
                             event_bus.emit("p_"+param);
                         }

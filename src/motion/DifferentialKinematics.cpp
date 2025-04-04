@@ -93,10 +93,10 @@ namespace SmallRobots {
 
         MotorsVelocity vel = getMotorsVelocity();
         float vR = -vel.right * wheel_radius;  //negative because of the way motors are mounted
-        float vL = vL * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
+        float vL = vel.left * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
        
-        float deltaSR = vR*deltaT;
-        float deltaSL = vL*deltaT;
+        float deltaSR = vR*deltaT/1000000.0f;
+        float deltaSL = vL*deltaT/1000000.0f;
 
         Pose deltaPose;
         deltaPose.x = (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;

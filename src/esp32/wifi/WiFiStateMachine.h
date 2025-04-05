@@ -128,6 +128,7 @@ namespace SmallRobots {
         int send_port = UDP_PORT_SEND;
         bool ota = true;
         uint8_t retries = 0;
+        IPAddress multicast_ip = IPAddress(239, 255, 0, 1);
 
 
     protected:
@@ -203,13 +204,22 @@ namespace SmallRobots {
         void startNetwork() {
             // start UDP
             if (udp.listen(port)) { // TODO perhaps put this under control of state machine, or RobotControl class
-                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->print("Listening on udp port ");
-                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println(port);
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->printf("Listening on udp port %d\n", port);
                 AuPacketHandlerFunction func = std::bind(&SmallRobotControl::onPacket, &osc_control, std::placeholders::_1);
                 udp.onPacket(func);
             }
             else {
                 if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("ERROR: Failed to listen on udp port");
+                // TODO trigger failed?
+                return;
+            }
+            if (udp.listenMulticast(multicast_ip, port)) {
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->printf("Listening on multicast ip %s port %d\n", multicast_ip.toString().c_str(), port);
+                AuPacketHandlerFunction func = std::bind(&SmallRobotControl::onPacket, &osc_control, std::placeholders::_1);
+                udp.onPacket(func);
+            }
+            else {
+                if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("ERROR: Failed to listen on multicast udp port");
                 // TODO trigger failed?
                 return;
             }

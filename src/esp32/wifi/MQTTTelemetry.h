@@ -23,6 +23,7 @@ namespace SmallRobots {
         void sendTelemetry(uint8_t* data, size_t len, const char* subtopic = nullptr) {
             auto c = connect_and_topic(subtopic);
             if (c.first) {
+                //smallrobots_debug.printf("MQTT publish %s size %d\n", c.second.c_str(), len);
                 mqtt.publish(c.second.c_str(), data, len);
             }
         };

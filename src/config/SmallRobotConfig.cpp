@@ -89,6 +89,14 @@ namespace SmallRobots {
 
 
     SmallRobotParameter& SmallRobotConfig::operator[](const char* key) {
+        String k = key;
+        return operator[](k);
+    };
+
+
+
+
+    SmallRobotParameter& SmallRobotConfig::operator[](String& key) {
         auto result = params.find(key);
         if (result != params.end()) {
             return *result->second;
@@ -96,13 +104,6 @@ namespace SmallRobots {
         else {
             return UNKNOWN_PARAM;
         }
-    };
-
-
-
-
-    SmallRobotParameter& SmallRobotConfig::operator[](String& key) {
-        return operator[](key.c_str());
     };
 
 

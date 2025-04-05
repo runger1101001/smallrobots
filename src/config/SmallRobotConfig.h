@@ -173,6 +173,12 @@ namespace SmallRobots {
             return tags.find(tag) != tags.end();
         };
 
+        void forEach(std::function<void(String)> func) {
+            for (auto i = tags.begin(); i != tags.end(); ++i) {
+                func(*i);
+            }
+        };
+
     private:
         std::set<String> tags;
 
@@ -193,13 +199,19 @@ namespace SmallRobots {
         SmallRobotParameter& operator[](const char* key);
         SmallRobotParameter& operator[](String& key);
 
+        void forEach(std::function<void(const char*, SmallRobotParameter&)> func) {
+            for (auto i = params.begin(); i != params.end(); ++i) {
+                func(i->second->name, *i->second);
+            }
+        };
+
         SmallRobotTags tags;
         bool debug = false;
     
         static SmallRobotParameter UNKNOWN_PARAM;
 
     private:
-        std::map<const char*, SmallRobotParameter*> params;
+        std::map<String, SmallRobotParameter*> params;
     };
 
 

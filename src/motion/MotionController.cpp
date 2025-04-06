@@ -8,12 +8,69 @@ namespace SmallRobots {
     //  MotionController
     //------------------------------------------------------------------------------------------------------------------
 
-    MotionController::MotionController(DifferentialKinematics& drive) : kinematics(drive) {
-        curPose = Pose();
-        addPoseToPath(curPose);
+    MotionController::MotionController(DifferentialKinematics& drive, Odometry& _odometryCtrl) : kinematics(drive), odometryCtrl(_odometryCtrl) {
     };
 
     MotionController::~MotionController() {
+    };
+
+    void MotionController::setup(){
+
+    };
+    void MotionController::run(){
+
+        curPose = odometryCtrl.getCurPose();
+
+   
+        if (subPathIndex == 0){ //RECEIVE NEW TARGET
+            calculateDubinForNextPoseInPath();
+            Serial.println ("START SEG 1");
+            subPathIndex=1;
+            setWheelVelocitiesSeg1();
+            
+        } else if (subPathIndex==-1){
+            //NOTHING HAPPENS
+        }
+        else
+        {
+            //CHECK IF ARRIVED 
+            if (checkIfArrived()){
+                //Serial.println (subPathIndex);
+                if (subPathIndex == 1){
+                    Serial.println ("FINISHED SEG 1");
+                    subPathIndex=2;
+                    setWheelVelocitiesSeg2();
+                    Serial.println ("START SEG 2");                
+                }
+                else if (subPathIndex == 2){
+                    Serial.println ("FINISHED SEG 2");
+                    subPathIndex=3;
+                    setWheelVelocitiesSeg3();
+                    Serial.println ("START SEG 3");                    
+                }
+                else if (subPathIndex == 3) {
+                    Serial.println ("FINISHED SEG 3");
+                    //What now?
+                    if (pathBehaviour == LOOP)
+                    {
+                        loopPath(); //counts up the pathIndex, if reached end, restarts from beginning, returns false if only one Pose in path
+                        subPathIndex=0;
+                    }
+                    else if (pathBehaviour ==END)
+                    {
+                        stop();
+                        subPathIndex=-1;
+                    }
+                    
+                }            
+            } 
+        }
+
+    };
+
+    void MotionController::activateNewTarget()
+    {
+        subPathIndex=0;
     };
 
     void MotionController::addPoseToPath(Pose p)
@@ -21,11 +78,16 @@ namespace SmallRobots {
         path.push_back(p); //at the end of path, continue current path
 
     };
+    void MotionController::addPoseToPathAndGoThereFirst(Pose p)
+    {
+        path.push_back(p); //at the end of path, continue current path
+        curPathIndex= path.size()-1;
+    };
     void MotionController::setPoseToReplacePath(Pose p)
     {
-        path.clear(); //stop continueing currentpath and st
-        addPoseToPath(curPose); //so a path segment is between the start and the new target pose
+        path.clear(); //stop continueing currentpath 
         path.push_back(p);
+        curPathIndex=0;
 
     };
 
@@ -33,8 +95,13 @@ namespace SmallRobots {
         path.insert(path.end(), poses.begin(), poses.end());
         
     };
+    void MotionController::addPoseListToPathAndGoThereFirst(std::vector<Pose> poses){
+        path.insert(path.end(), poses.begin(), poses.end());
+        curPathIndex= path.size()-1;
+    };
     void MotionController::setPoseListToReplacePath(std::vector<Pose> poses){
         path = poses;
+        curPathIndex=0;
     };
 
     void MotionController::deletePath()
@@ -59,12 +126,16 @@ namespace SmallRobots {
     };
     
 
-    void MotionController::setTarget() //get next pose in path, calculate dubin path from current pose and target pose
+    void MotionController::calculateDubinForNextPoseInPath() //get next pose in path, calculate dubin path from current pose and target pose
     {
+        
         // Serial.println ("MotionController::setTarget()");
         // Serial.println("curPathIndex: " + (String) curPathIndex);
         // Serial.println("path queue length: " + (String) path.size());
         targetPose = path[curPathIndex];
+        if (curPathIndex==0){ //add cur pose to path so we can loop
+            path.insert(path.begin(), curPose);
+        }
         // Serial.println("Current Pose: " + (String)curPose.x + ", " + (String) curPose.y + ", " + (String)degrees( curPose.angle));
         // Serial.println("Target Pose: " + (String)targetPose.x + ", " + (String) targetPose.y + ", " + (String) degrees(targetPose.angle));
         pathPlanner.calculate(curPose, targetPose);
@@ -99,10 +170,10 @@ namespace SmallRobots {
         curDirName = pathPlanner.arcDirName1;
 
         if (pathPlanner.arcDirName1.equals ("L")) {
-          kinematics.move(vRobot, R); 
+          kinematics.turnLeftForward(vRobot,R); //kinematics.move(vRobot, R); 
           targetAngle = pathPlanner.arcAngle1 + curPose.angle ;
         } else if (pathPlanner.arcDirName1.equals ("R")){
-          kinematics.move(vRobot, -R); 
+          kinematics.turnRightForward(vRobot,R); //kinematics.move(vRobot, -R); 
           targetAngle = -pathPlanner.arcAngle1 + curPose.angle ;
         }
         //Serial.println ("targetAngle: "+ String (degrees(targetAngle))+ " °");
@@ -144,10 +215,10 @@ namespace SmallRobots {
             // R = distance(curV, ICC);
 
             if (pathPlanner.arcDirName12.equals ("L")) {
-                kinematics.move(vRobot, R); 
+                kinematics.turnLeftForward(vRobot,R); //kinematics.move(vRobot, R); 
                 targetAngle = pathPlanner.arcAngle12 + curPose.angle ;
             } else if (pathPlanner.arcDirName12.equals ("R")) {
-                kinematics.move(vRobot, -R); 
+                kinematics.turnRightForward(vRobot,R); //kinematics.move(vRobot, -R); 
                 targetAngle = -pathPlanner.arcAngle12 + curPose.angle ;
             }
           }
@@ -170,10 +241,10 @@ namespace SmallRobots {
         curDirName = pathPlanner.arcDirName2;
 
         if (pathPlanner.arcDirName2.equals ("L")) {
-            kinematics.move(vRobot, R); 
+            kinematics.turnLeftForward(vRobot,R); //kinematics.move(vRobot, R); 
             targetAngle = pathPlanner.arcAngle2 + curPose.angle ;
         } else if (pathPlanner.arcDirName2.equals ("R")){
-            kinematics.move(vRobot, -R);
+            kinematics.turnRightForward(vRobot,R); //kinematics.move(vRobot, -R); 
             targetAngle = -pathPlanner.arcAngle2 + curPose.angle ;
         }
 
@@ -182,10 +253,6 @@ namespace SmallRobots {
     };
 
     void MotionController::stop(){
-        kinematics.stop();
-    };
-
-    void MotionController::stopMoving(){
         kinematics.stop();
     };
 
@@ -206,12 +273,6 @@ namespace SmallRobots {
     void MotionController::setPathRadius(float _radius){ //this is only for the next move command from dubin path
         pathPlanner.setPathRadius(_radius);//in mm
     }; 
-
-    void MotionController::setCurPose(Pose pose){
-        curPose = pose;
-        //Serial.println ("curPose : " + (String) curPose.x+ ", " +(String) curPose.y+ ", " + (String) degrees(curPose.angle)) ;
-
-    };
 
 
     bool MotionController::loopPath()

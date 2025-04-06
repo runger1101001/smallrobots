@@ -5,15 +5,15 @@
 
 namespace SmallRobots {
 
-    class Odometry{
+    class DeadReckoning{
         public:
-            Odometry(DifferentialKinematics& _kinematics);
+        DeadReckoning(DifferentialKinematics& _kinematics);
             
-            ~Odometry();
+            ~DeadReckoning();
             void setup();
             void run();
             void updatePose(unsigned long _deltaT);
-            void resetLastTime();
+            void setLastTime();
             Pose getCurPose();
             void resetCurPose(); //to start pose 0,0,0
             void setCurPose(float x, float y, float angle);
@@ -27,7 +27,8 @@ namespace SmallRobots {
             
             int lastTime=0, deltaT=0; //delat T, read in micros
             uint32_t update_ms = 100;
+            
     };
 
-    extern Pose odometryPose;
+    extern Pose deadReckoningPose;
 }; // namespace SmallRobots

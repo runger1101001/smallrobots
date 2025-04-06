@@ -161,7 +161,7 @@ namespace SmallRobots {
             //no -> repeat this state
             //yes -> move to next state 
            
-            odometry.updatePose();          //seems to work
+            //odometry.updatePose();          //seems to work-----REPLACE
 
             Pose curPose = odometry.getCurPose();
             

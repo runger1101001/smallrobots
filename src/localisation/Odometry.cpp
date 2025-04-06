@@ -6,18 +6,31 @@ namespace SmallRobots {
 
     Odometry::Odometry(DifferentialKinematics& _kinematics): kinematics(_kinematics)
     {
-        resetLastTime();
+        
     };
     Odometry::~Odometry()
     {};
 
-    void Odometry::updatePose()
-    {
+    void Odometry::setup(){
+        lastTime = micros();
+    };
+
+    void Odometry::run(){
+
         unsigned long now = micros();
-        deltaT = now - lastTime; 
-        lastTime = now;
-        
-        Pose deltaPose = kinematics.getDeltaPose(deltaT,curPose);
+        if (now - lastTime > update_ms*1000){
+            deltaT = now - lastTime; 
+            lastTime = now;
+
+            updatePose(deltaT);
+            odometryPose = getCurPose();
+            event_bus.emit("new_odometry_pose");
+        }
+    };
+
+    void Odometry::updatePose(unsigned long _deltaT)
+    {
+        Pose deltaPose = kinematics.getDeltaPose(_deltaT,curPose, "odometry");
         curPose.x += deltaPose.x;
         curPose.y += deltaPose.y;
         curPose.angle += deltaPose.angle;

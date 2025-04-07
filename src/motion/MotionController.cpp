@@ -133,7 +133,7 @@ namespace SmallRobots {
         // Serial.println("curPathIndex: " + (String) curPathIndex);
         // Serial.println("path queue length: " + (String) path.size());
         targetPose = path[curPathIndex];
-        if (curPathIndex==0){ //add cur pose to path so we can loop
+        if (curPathIndex==0 && path.size()<=1){ //add cur pose to path so we can loop
             path.insert(path.begin(), curPose);
         }
         // Serial.println("Current Pose: " + (String)curPose.x + ", " + (String) curPose.y + ", " + (String)degrees( curPose.angle));
@@ -253,7 +253,8 @@ namespace SmallRobots {
     };
 
     void MotionController::stop(){
-        kinematics.stop();
+        kinematics.setSpeed(0,0);
+        //kinematics.stop(); //not sure what is better, but when the motors are disabled, the robot moves further than intended, maybe wait a bit after stop, then disable
     };
 
     void MotionController::enableMotors(){
@@ -263,16 +264,20 @@ namespace SmallRobots {
     void MotionController::setRobotVelocity( float _vRobot){ //in mm/s
         //make sure that the sign of new velocity is the same as in current movement
         float speed = kinematics.getCurRobotSpeed();
-        // if (speed >= 0)vRobot = abs( _vRobot );
-        // else vRobot = - abs(_vRobot);
+        if (speed >= 0)vRobot = abs( _vRobot );
+        else vRobot = - abs(_vRobot);
         vRobot =_vRobot;
         float radius = kinematics.getCurRobotRadius();
-        kinematics.move(vRobot, radius);
+        if (subPathIndex !=-1 )kinematics.move(vRobot, radius);
     };
 
     void MotionController::setPathRadius(float _radius){ //this is only for the next move command from dubin path
         pathPlanner.setPathRadius(_radius);//in mm
     }; 
+
+    void MotionController::setPathBevahiourType(int type){
+        pathBehaviour = type;
+    };
 
 
     bool MotionController::loopPath()

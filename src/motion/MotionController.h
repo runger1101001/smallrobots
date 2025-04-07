@@ -92,6 +92,7 @@ namespace SmallRobots {
 
             void setRobotVelocity(float _vRobot = DEFAULT_ROBOT_SPEED); //in mm/s
             void setPathRadius(float _radius = DEFAULT_PATH_RADIUS); //in mm , absolute value
+            void setPathBevahiourType(int type);
 
             bool loopPath(); //returns true if there is more than one pose in the path
             bool checkIfArrived();

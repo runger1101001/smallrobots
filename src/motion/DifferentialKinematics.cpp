@@ -89,9 +89,12 @@ namespace SmallRobots {
     };
 
 
-    Pose DifferentialKinematics::getDeltaPose(unsigned long deltaT, Pose lastPose){ //delataT in micros as SimpleFoc reads velocity /micros ?!
+    Pose DifferentialKinematics::getDeltaPose(unsigned long deltaT, Pose lastPose, String type){ //delataT in micros as SimpleFoc reads velocity /micros ?!
 
-        MotorsVelocity vel = getMotorsVelocity();
+        MotorsVelocity vel;
+        if (type.equals ("odometry")) vel = getMotorsVelocity();
+        else if (type.equals ("deadreckoning")) vel = getMotorsSetVelocity();
+        else return lastPose;
         float vR = -vel.right * wheel_radius;  //negative because of the way motors are mounted
         float vL = vel.left * wheel_radius; //at shaft --> at wheel, wheel tangential velocities
        

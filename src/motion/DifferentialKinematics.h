@@ -5,6 +5,7 @@
 #include <limits>
 #include <Arduino.h>
 #include "./Vector.h"
+#include "control/SmallRobotEventBus.h"
 
 
 #define RADIUS_STREIGHT (std::numeric_limits<float>::infinity())
@@ -59,8 +60,10 @@ namespace SmallRobots {
 
             virtual MotorsPosition getMotorsPosition()=0;
             virtual MotorsVelocity getMotorsVelocity()=0;
-
-            Pose getDeltaPose(unsigned long deltaT,Pose lastPose);
+            virtual MotorsVelocity getMotorsSetVelocity()=0;
+            virtual unsigned long getMotorsSetVelocityTime()=0;
+            virtual bool getMotorsEnabled()=0;
+            Pose getDeltaPose(unsigned long deltaT,Pose lastPose, String type);// type: "odometry" or "deadreckoning" otherwise original pose is returned
 
             float wheel_base;
             float half_wheel_base;

@@ -64,8 +64,8 @@ namespace SmallRobots {
                     if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Incoming OSC message tags: "+tagstr);
                     // process message
                     int pos2 = msg.match("/params", pos);
-                    if (pos2>=pos) {
-                        String param = String(&msg.getAddress()[pos2+6]);
+                    if (pos2>1) {
+                        String param = String(&msg.getAddress()[pos2+pos+1]);
                         SmallRobotParameter& p = robot_config[param];
                         if (!(p == SmallRobotConfig::UNKNOWN_PARAM)) {
                             if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("OSC param: "+param);
@@ -93,16 +93,16 @@ namespace SmallRobots {
                     }
                     // process behaviour message
                     pos2 = msg.match("/behaviour", pos);
-                    if (pos2>=pos) {
-                        String behaviour = String(&msg.getAddress()[pos2+9]);
+                    if (pos2>1) {
+                        String behaviour = String(&msg.getAddress()[pos2+pos]);
                         if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("OSC behaviour: "+behaviour);
                         // TODO process behaviour
                         return; // we're done with the behaviour message
                     }
                     // process control message
                     pos2 = msg.match("/command", pos);
-                    if (pos2>=pos) {
-                        String command = String(&(msg.getAddress()[pos2+6]));
+                    if (pos2>1) {
+                        String command = String(&(msg.getAddress()[pos2+pos+1]));
                         // process command
                         if (commands.find(command) != commands.end()) { 
                             if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Invoking OSC command: "+command);

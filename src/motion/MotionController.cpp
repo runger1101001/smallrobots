@@ -253,8 +253,8 @@ namespace SmallRobots {
     };
 
     void MotionController::stop(){
-        kinematics.setSpeed(0,0);
-        //kinematics.stop(); //not sure what is better, but when the motors are disabled, the robot moves further than intended, maybe wait a bit after stop, then disable
+        // kinematics.setSpeed(0,0);
+        kinematics.stop(); //not sure what is better, but when the motors are disabled, the robot moves further than intended, maybe wait a bit after stop, then disable
     };
 
     void MotionController::enableMotors(){

@@ -59,6 +59,7 @@ namespace SmallRobots {
                         break;
                     }
                 } while(more > 0);
+                tagstr = String(&msg.getAddress()[1],pos-1);
 
                 if (all_match) {
                     if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Incoming OSC message tags: "+tagstr);

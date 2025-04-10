@@ -6,9 +6,9 @@
 
 class MQTTDebug : public Print {
 public:
-    MQTTDebug(PubSubClient& pubsub) : mqtt(pubsub) {
+    MQTTDebug(PubSubClient& pubsub) : mqtt(pubsub), Print() {
     };
-    ~MQTTDebug();
+    ~MQTTDebug(){};
 
     void begin(String& hostname, String& id, IPAddress server, uint16_t port) {
         mqtt.setServer(server, port);

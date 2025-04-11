@@ -12,7 +12,10 @@ public:
 
     void begin(String& hostname, String& id, IPAddress server, uint16_t port) {
         mqtt.setServer(server, port);
-        mqtt.connect(hostname.c_str());
+        if (!mqtt.connect(hostname.c_str())) {
+            SmallRobots::smallrobots_debug.println("Debug MQTT connection failed");
+            return;
+        }
         topic = "/debug/" + id;
     };
 
@@ -36,9 +39,8 @@ protected:
     size_t pos = 0;
 
     void _flush() {
-        if (!mqtt.connected())
-            return;
-        mqtt.publish(topic.c_str(), buffer, pos);
+        if (mqtt.connected()) 
+            mqtt.publish(topic.c_str(), buffer, pos);
         pos = 0;
     };
 };

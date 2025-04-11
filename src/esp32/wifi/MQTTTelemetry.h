@@ -13,6 +13,7 @@ namespace SmallRobots {
 
         void begin(const char* hostname, IPAddress broker, uint16_t port = 1883) {
             mqtt.setServer(broker, port);
+            mqtt.setBufferSize(2048);
             if (mqtt.connect(hostname))
                 smallrobots_debug.println("MQTT connected");
             else

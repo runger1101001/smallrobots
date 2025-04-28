@@ -2,6 +2,8 @@
 
 namespace SmallRobots {
 
+    extern SimpleEventBus event_bus;
+
     Pose odometryPose;
 
     Odometry::Odometry(DifferentialKinematics& _kinematics): kinematics(_kinematics)

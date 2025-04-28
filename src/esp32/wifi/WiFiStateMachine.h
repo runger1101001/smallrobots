@@ -81,17 +81,17 @@ namespace SmallRobots {
             }
             startNetwork();
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: Network up");
-            event_bus.emit("wifi_connected");
+            if (event_bus) event_bus->emit("wifi_connected");
         };
 
         void on_enter_disconnected() {
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi is disconnected. Reconnecting in " + String(WIFI_RECONNECT_INTERVAL) + " seconds...");
-            event_bus.emit("wifi_disconnected");    
+            if (event_bus) event_bus->emit("wifi_disconnected");    
         };
 
         void on_enter_failed() {
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi has failed");
-            event_bus.emit("wifi_failed");
+            if (event_bus) event_bus->emit("wifi_failed");
         };
 
 
@@ -129,7 +129,7 @@ namespace SmallRobots {
         bool ota = true;
         uint8_t retries = 0;
         IPAddress multicast_ip = IPAddress(239, 255, 0, 1);
-
+        EventBus<String>* event_bus;
 
     protected:
         AsyncUDP udp; //global to send OSC Messages

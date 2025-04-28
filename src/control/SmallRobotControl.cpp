@@ -86,7 +86,7 @@ namespace SmallRobots {
                             else {
                                 if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Unknown param type: "+param);
                             }
-                            event_bus.emit("p_"+param);
+                            // TODO emit events event_bus.emit("p_"+param);
                         }
                         else
                             if (debug && smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("Unknown OSC param: "+param);

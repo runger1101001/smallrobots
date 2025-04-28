@@ -22,7 +22,7 @@ A simple example, supporting a single event type. Note how pass by value semanti
 class MyEvent;
 
 // define event bus type
-typedef template EventBus<MyEvent> MyEventBus;
+typedef template TEventBus<ImmediateDispatcher, MyEvent> MyEventBus;
 
 // create an event bus of your type
 MyEventBus event_bus;
@@ -35,7 +35,7 @@ void some_setup_function() {
     });
 }
 
-
+// send an event to the bus
 void some_other_function(){
     event_bus.emit(MyEvent(9, 6.3f));
 }
@@ -56,7 +56,7 @@ enum BatteryEvent : uint8_t { full, low, empty, charging };
 enum TemperatureEvent : uint8_t { overtemp, normal, undertemp };
 
 // define an event bus which handles multiple event types
-typedef template EventBus<BatteryEvent,TemperatureEvent> MainEventBus;
+typedef template TEventBus<QueuedDispatcher, BatteryEvent, TemperatureEvent> MainEventBus;
 
 // create the event bus instance
 MainEventBus main_bus;
@@ -64,21 +64,32 @@ MainEventBus main_bus;
 // register some listeners
 void register_listeners() {
     // register a listener for battery events
-    main_bus.on<BatteryEvent>([](BatteryEvent e){
+    main_bus.on([](BatteryEvent e){
         // ...
     });
-    // register a listener for temperature events
-    main_bus.on<TemperatureEvent>([](TemperatureEvent e){
+    // register a listener for only overtemp temperature events
+    main_bus.on(TemperatureEvent::overtemp, [](TemperatureEvent e){
         // ...
     });
+    // pass the event-bus to a component that only deals with temperatures
+    temperature_indicator.useEventBus(main_bus.as<TemperatureEvent>());
 }
-
 
 // emit events
 void temperature_monitor() {
-    // handle temperature sensor...
-    if (temp > threshold)
-        main_bus.emit<TemperatureEvent>(TemperatureEvent::overtemp);
+    int temp = readTemperature(); // function that reads the sensor, just for example
+    if (temp > THRESHOLD) // THRESHOLD is some constant, just for example
+        main_bus.emit(TemperatureEvent::overtemp); // this is how we send an event
 }
+
+
+// main loop runs events
+void loop() {
+    // ...
+    main_bus.run(); // process any events that have arrived since the last time we ran
+}
+
 ```
+
+## Event Dispatch
 

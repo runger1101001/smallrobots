@@ -71,7 +71,7 @@ namespace SmallRobots {
     };
 
     const char LOCKEDQUEUEDISPATCHER_LOCKNAME[] = "LockedQueuedDispatcher";
-    typedef Lock<LOCKEDQUEUEDISPATCHER_LOCKNAME> LockedQueueDispatcherLock;
+    typedef Lock<LOCKEDQUEUEDISPATCHER_LOCKNAME> LockedQueueDispatcherLock; // TODO change this from being a global lock to a per-template-instance lock
 
     template<typename... Ts>
     class LockedQueuedDispatcher {

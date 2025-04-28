@@ -93,3 +93,31 @@ void loop() {
 
 ## Event Dispatch
 
+The event bus abstraction specifies that events which are emitted by some part of the code, are forwarded and eventually processed by the listnerers, in another part of the code. The manner in which events propagate from emitter to listener is not specified, except to say:
+- all registered listeners receive every event for which they registered
+- each listener receives the event in the form of its own seperate copy
+
+In particular the contract does not specify:
+- the order in which events are processed
+- the order in which listeners are called with each event
+- whether they are processed immediately, or later
+
+This is controlled by the *dispatch* process, which is implemented seperately to the event bus itself. Different dispatchers exist, so events can be dispatched in several ways, and you can also supply your own dispatcher implementation. The following dispatchers are pre-defined:
+
+- **ImmediateDispatcher** \
+  Events are processed immediately when emitted. Since the processing of events can emit more events, which are in turn immediately processed, this will lead to a different order of events from the other dispatchers. It can also mean you can generate an infinite loop of handlers/emits, so be careful when using this dispatcher.
+- **QueuedDispatcher** \
+  Events are placed into a queue, and processed during the call to TEventBus.run(). Call run() from your main loop to process the events that have been emitted since the last time you called run. New events emitted will be placed at the end of the queue. Events emitted during the event processing will be processed on the subsequent call to run(), not the current one. This behaviour is much closer to what most users expect from an EventBus than the immediate dispatch. QueuedDispatcher is not thread-safe, and so only suitable for use in single-threaded environments.
+- **LockedQueuedDispatcher** \
+  Usable with FreeRTOS. Extends the QueuedDispatcher with locking for thread-safe use.
+- **RTOSQueueDispatcher** \
+  Uses a FreeRTOS Queue (rather than std::queue) to queue the events. Warning! Only suitable for event types which can be copied with memcpy.
+- **RTOSTaskDispatcher** \
+  Dispatches each event on its own new FreeRTOS task. This will lead to a different (and hard to predict) order for the processing of events. Within each event's task the listeners for that event are called sequentially.
+
+Some notes:
+- Generally, we expect events to be processed in the order they are generated. RTOSTaskDispatcher doesn't guarantee this, while ImmediateDispatcher processes the events/handlers in a depth-first way, wnich is unexpected. QueuedDispatcher, RTOSQueueDispatcher and LockedQueuedDispatcher process events in the expected order.
+- ImmediateDispatcher processes emitted events immediately, RTOSTaskDispatcher processes them later, whenever their tasks are scheduled by FreeRTOS. The other dispatchers process the events when you call the TEventBus.run() method.
+- Listeners are processed in order of their registration. So you can influence the order in which listeners are called by changing their order of registration.
+- Note: the listener registration process (e.g. calling EventBus.on(...) ) is not thread-safe. (TODO should we provide a thread-safe version for use on ESP32?)
+

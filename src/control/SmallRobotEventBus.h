@@ -63,15 +63,6 @@ namespace SmallRobots {
             }
         };
 
-        // void dispatchToListeners(std::variant<Ts...>& event) {
-        //     Serial.println("Dispatching event");
-        //     std::visit([&](auto&& arg) {
-        //         dispatch(arg);
-        //     }, event);
-        // };
-
-
-
     protected:
         D<Ts...> dispatcher{*this};
         std::tuple<std::vector<std::function<void(Ts)>>...> callbacks = { std::vector<std::function<void(Ts)>>{}... };

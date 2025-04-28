@@ -2,11 +2,9 @@
 
 namespace SmallRobots {
 
-    extern SimpleEventBus event_bus;
-
     Pose odometryPose;
 
-    Odometry::Odometry(DifferentialKinematics& _kinematics): kinematics(_kinematics)
+    Odometry::Odometry(DifferentialKinematics& _kinematics, EventBus<String>& event_bus): kinematics(_kinematics), event_bus(event_bus)
     {
         
     };
@@ -26,7 +24,7 @@ namespace SmallRobots {
 
             updatePose(deltaT);
             odometryPose = getCurPose();
-            event_bus.emit("new_odometry_pose");
+            event_bus.emit(String("new_odometry_pose"));
         }
     };
 

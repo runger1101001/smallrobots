@@ -81,17 +81,17 @@ namespace SmallRobots {
             }
             startNetwork();
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: Network up");
-            if (event_bus) event_bus->emit("wifi_connected");
+            if (event_bus) event_bus->emit(String("wifi_connected"));
         };
 
         void on_enter_disconnected() {
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi is disconnected. Reconnecting in " + String(WIFI_RECONNECT_INTERVAL) + " seconds...");
-            if (event_bus) event_bus->emit("wifi_disconnected");    
+            if (event_bus) event_bus->emit(String("wifi_disconnected"));    
         };
 
         void on_enter_failed() {
             if (smallrobot_debug_print!=nullptr) smallrobot_debug_print->println("WiFiStateMachine: WiFi has failed");
-            if (event_bus) event_bus->emit("wifi_failed");
+            if (event_bus) event_bus->emit(String("wifi_failed"));
         };
 
 

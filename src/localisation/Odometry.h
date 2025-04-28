@@ -7,7 +7,7 @@ namespace SmallRobots {
 
     class Odometry{
         public:
-            Odometry(DifferentialKinematics& _kinematics);
+            Odometry(DifferentialKinematics& _kinematics, EventBus<String>& event_bus);
             
             ~Odometry();
             void setup();
@@ -20,6 +20,7 @@ namespace SmallRobots {
 
         protected:
             DifferentialKinematics& kinematics;
+            EventBus<String>& event_bus;
             //Start Pose: location x,y and heading angle
             //Local coordinate system at the moment
             //angle = 0 heading in y direction

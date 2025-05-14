@@ -39,6 +39,7 @@ protected:
     size_t pos = 0;
 
     void _flush() {
+        // TODO reconnect if we've lost connection
         if (mqtt.connected()) 
             mqtt.publish(topic.c_str(), buffer, pos);
         pos = 0;

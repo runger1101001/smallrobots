@@ -31,7 +31,7 @@ namespace SmallRobots {
     void DeadReckoning::updatePose(unsigned long _deltaT)
     {
         if (kinematics.getMotorsEnabled()){
-            Pose deltaPose = kinematics.getDeltaPose(_deltaT,curPose, "deadreckoning");
+            deltaPose = kinematics.getDeltaPose(_deltaT,curPose, "deadreckoning");
             curPose.x += deltaPose.x;
             curPose.y += deltaPose.y;
             curPose.angle += deltaPose.angle;

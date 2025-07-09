@@ -109,6 +109,7 @@ namespace SmallRobots {
             WiFiEventFuncCb func = std::bind(&WiFiStateMachine::onWifiEvent, this, std::placeholders::_1, std::placeholders::_2);
             WiFi.onEvent(func);
             WiFi.mode(WIFI_STA);
+            //for high power wifi: WiFi.setSleep(WIFI_PS_NONE);
             machine.start();
         };
 

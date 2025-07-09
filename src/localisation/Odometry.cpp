@@ -24,13 +24,13 @@ namespace SmallRobots {
 
             updatePose(deltaT);
             odometryPose = getCurPose();
-            event_bus.emit(String("new_odometry_pose"));
+            //event_bus.emit(String("new_odometry_pose"));
         }
     };
 
     void Odometry::updatePose(unsigned long _deltaT)
     {
-        Pose deltaPose = kinematics.getDeltaPose(_deltaT,curPose, "odometry");
+        deltaPose = kinematics.getDeltaPose(_deltaT,curPose, "odometry");
         curPose.x += deltaPose.x;
         curPose.y += deltaPose.y;
         curPose.angle += deltaPose.angle;

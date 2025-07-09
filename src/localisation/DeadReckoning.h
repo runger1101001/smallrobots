@@ -24,6 +24,7 @@ namespace SmallRobots {
             //Local coordinate system at the moment
             //angle = 0 heading in y direction
             Pose curPose = Pose(); 
+            Pose deltaPose = Pose();
             
             int lastTime=0, deltaT=0; //delat T, read in micros
             uint32_t update_ms = 10;

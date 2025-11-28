@@ -13,7 +13,7 @@ namespace SmallRobots {
      * SmallRobotControlSlipSerial
      * 
      * OSC control interface for SLIP Serial communication
-     * Works with SLIPEncodedSerial for sending and receiving OSC messages
+     * Works with SLIPEncodedSerial for sending OSC messages
      * 
      * Can be used on both sender (C6) and receiver (Pico) sides
      * 
@@ -22,9 +22,6 @@ namespace SmallRobots {
      *   SmallRobotControlSlipSerial osc_control(slip_serial);
      *   osc_control.init();
      *   osc_control.addCommand("/move", [](OSCMessage& msg) { ... });
-     *   
-     *   In loop:
-     *   osc_control.run();  // receive and process messages
      *   
      *   To send:
      *   OSCMessage msg("/move");
@@ -41,12 +38,14 @@ namespace SmallRobots {
         void init();
         
         void addCommand(String name, std::function<void(OSCMessage&)> callback);
-
+        
         void run();
         
         void send(OSCMessage& msg);
         
         void onPacket(OSCMessage& msg);
+        
+        bool isInSlipPacket() const { return _in_slip_packet; }
 
         bool debug = false;
 
@@ -54,6 +53,9 @@ namespace SmallRobots {
         SLIPEncodedSerial& _slip_serial;
         uint8_t _osc_buffer[OSC_BUFFER_SIZE];
         std::map<String, SmallRobotCommand> _commands;
+        bool _in_slip_packet = false;
+        unsigned long _packet_start_time = 0;
+        static const unsigned long SLIP_PACKET_TIMEOUT = 1000;  // 1 second timeout
     };
 
 }

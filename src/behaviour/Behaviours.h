@@ -16,10 +16,11 @@ namespace SmallRobots {
         Behaviour(int _rate = 1000) : rate(_rate) {};
         virtual Behaviour* run() = 0;
         virtual const char* getName() = 0;
-        
+
         int rate = 0; // in milliseconds, 0 is off
         long nextRun = 0;
         long lastRun = -1;
+
     };
 
 

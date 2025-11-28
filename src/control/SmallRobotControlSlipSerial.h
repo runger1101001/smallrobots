@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <OSCMessage.h>
 #include <SLIPEncodedSerial.h>
-#include "SmallRobotControl.h"
+#include "SmallRobotCommand.h"
 
 namespace SmallRobots {
 

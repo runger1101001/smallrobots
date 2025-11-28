@@ -26,17 +26,9 @@
 #include <functional>
 #include <Arduino.h>
 #include <OSCMessage.h>
+#include "SmallRobotCommand.h"
 
 namespace SmallRobots {
-
-
-  class SmallRobotCommand {
-    public:
-      String name;
-      std::function<void(OSCMessage&)> callback;
-  };
-
-
 
   class SmallRobotControl {
   public:

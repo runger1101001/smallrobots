@@ -39,7 +39,9 @@ namespace SmallRobots {
         
         void addCommand(String name, std::function<void(OSCMessage&)> callback);
         
-        void run();
+        void runMotorBoard();
+        
+        void runMainBoard();
         
         void send(OSCMessage& msg);
         

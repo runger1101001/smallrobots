@@ -5,9 +5,6 @@ namespace SmallRobots {
 
     void SmallRobotControlSlipSerial::init() {
         // Initialization hook for any setup needed
-        if (debug && smallrobot_debug_print != nullptr) {
-            smallrobot_debug_print->println("SmallRobotControlSlipSerial initialized");
-        }
     }
 
     void SmallRobotControlSlipSerial::addCommand(String name, std::function<void(OSCMessage&)> callback) {
@@ -15,11 +12,14 @@ namespace SmallRobots {
         cmd.name = name;
         cmd.callback = callback;
         _commands[name] = cmd;
-        
-        if (debug && smallrobot_debug_print != nullptr) {
-            smallrobot_debug_print->println("OSC command registered: " + name);
-        }
     }
+
+    void SmallRobotControlSlipSerial::addData(String name, std::function<void(OSCMessage&)> callback) {
+        SmallRobotCommand cmd;
+        cmd.name = name;
+        cmd.callback = callback;
+        _data[name] = cmd;
+    };
 
     void SmallRobotControlSlipSerial::runMotorBoard() {
         // For receiving OSC commands via SLIPEncodedSerial (motor board side)
@@ -33,10 +33,6 @@ namespace SmallRobots {
                 }
                 if (!msg.hasError()) {
                     onPacket(msg);
-                } else {
-                    if (debug && smallrobot_debug_print != nullptr) {
-                        smallrobot_debug_print->println("OSC message error");
-                    }
                 }
             }
         }
@@ -65,7 +61,19 @@ namespace SmallRobots {
 
     void SmallRobotControlSlipSerial::onPacket(OSCMessage& msg) {
         String address = msg.getAddress();
-        
+
+        // process data message
+        if (_data.find(address) != _data.end()) {
+            if (debug && smallrobot_debug_print != nullptr) {
+                smallrobot_debug_print->println("Invoking OSC data: " + address);
+            }
+            _data[address].callback(msg);
+        } else {
+            if (debug && smallrobot_debug_print != nullptr) {
+                smallrobot_debug_print->println("Unknown OSC data: " + address);
+            }
+        }
+
         // Look for exact match in registered commands
         if (_commands.find(address) != _commands.end()) {
             if (debug && smallrobot_debug_print != nullptr) {

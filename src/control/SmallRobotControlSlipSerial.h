@@ -38,7 +38,9 @@ namespace SmallRobots {
         void init();
         
         void addCommand(String name, std::function<void(OSCMessage&)> callback);
-        
+        void addData(String name, std::function<void(OSCMessage&)> callback);
+
+
         void runMotorBoard();
         
         void runMainBoard();
@@ -55,6 +57,7 @@ namespace SmallRobots {
         SLIPEncodedSerial& _slip_serial;
         uint8_t _osc_buffer[OSC_BUFFER_SIZE];
         std::map<String, SmallRobotCommand> _commands;
+        std::map<String, SmallRobotCommand> _data;
         bool _in_slip_packet = false;
         unsigned long _packet_start_time = 0;
         static const unsigned long SLIP_PACKET_TIMEOUT = 1000;  // 1 second timeout

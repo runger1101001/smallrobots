@@ -34,12 +34,16 @@ namespace SmallRobots {
   public:
     void init();
     void addCommand(String name, std::function<void(OSCMessage&)> callback);
+    void addData(String name, std::function<void(OSCMessage&)> callback);
+    void addSoundCommand(String name, std::function<void(OSCMessage&)> callback);
 
     void onPacket(AsyncUDPPacket packet);
 
     bool debug = false;
   private:
     std::map<String, SmallRobotCommand> commands;
+    std::map<String, SmallRobotCommand> data;
+    std::map<String, SmallRobotCommand> sound_commands;
   };
 
 

@@ -21,6 +21,11 @@ namespace SmallRobots {
         RESTART,
     };
 
+    enum MotionMode {
+        DUBINS_PATH,      // Original path planning mode
+        DIRECT_VELOCITY   // Direct velocity command mode
+    };
+
 
     
     class MotionController {
@@ -32,6 +37,7 @@ namespace SmallRobots {
 
             Pose curPose;
             Pose targetPose;
+            Pose feedbackPose; //from camera/localisation system
 
             Vector ICC; //Instantaneous Center of Curvature
             float R = MINRADIUS; //dist between robot's pose and its ICC
@@ -97,14 +103,34 @@ namespace SmallRobots {
             bool loopPath(); //returns true if there is more than one pose in the path
             bool checkIfArrived();
 
+            void setFeedbackPose(Pose p);
+
+            // Set direct velocity (vx, vy in mm/s) - bypasses path planning
+            void setDesiredVelocity(float vx, float vy);
+            
+            // Switch between motion modes
+            void setMotionMode(MotionMode mode);
+            
+            // Stop direct velocity control and return to path planning
+            void exitDirectVelocityMode();
+            
             DifferentialKinematics& kinematics;
             Odometry& odometryCtrl;
             DifferentialPathPlanner pathPlanner = DifferentialPathPlanner();
             
             String curDirName = "N";
+
+        private:
+            MotionMode currentMode = DUBINS_PATH;
+            float desired_vx = 0;  // Desired velocity x component (mm/s)
+            float desired_vy = 0;  // Desired velocity y component (mm/s)
+            
+            // Direct velocity mode execution
+            void runDirectVelocityMode();
+            void setWheelVelocitiesFromDesired();
     };
 
-}; //end namespace SmallRobots 
+}; //end namespace SmallRobots
 
 
 

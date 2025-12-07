@@ -3,6 +3,8 @@
 namespace SmallRobots {
 
     Pose odometryPose;
+    Pose odometryDeltaPose;
+    unsigned long odometryDeltaT;
 
     Odometry::Odometry(DifferentialKinematics& _kinematics, EventBus<String>& event_bus): kinematics(_kinematics), event_bus(event_bus)
     {
@@ -19,11 +21,13 @@ namespace SmallRobots {
 
         unsigned long now = micros();
         if (now - lastTime > update_ms*1000){
-            deltaT = now - lastTime; 
+            deltaT = now - lastTime;  // Update global deltaT
             lastTime = now;
 
             updatePose(deltaT);
-            odometryPose = getCurPose();
+            odometryPose = getCurPose(); // Update global pose
+            odometryDeltaPose = getDeltaPose();  // Update global deltaPose
+            odometryDeltaT = getDeltaT();  // Update global deltaT
             //event_bus.emit(String("new_odometry_pose"));
         }
     };

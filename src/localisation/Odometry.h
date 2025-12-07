@@ -17,6 +17,8 @@ namespace SmallRobots {
             Pose getCurPose();
             void resetCurPose(); //to start pose 0,0,0
             void setCurPose(float x, float y, float angle);
+            Pose getDeltaPose() { return deltaPose; }
+            unsigned long getDeltaT() { return deltaT; }
 
         protected:
             DifferentialKinematics& kinematics;
@@ -32,4 +34,6 @@ namespace SmallRobots {
     };
 
     extern Pose odometryPose;
+    extern Pose odometryDeltaPose;
+    extern unsigned long odometryDeltaT;
 }; // namespace SmallRobots

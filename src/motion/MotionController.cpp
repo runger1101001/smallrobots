@@ -1,5 +1,3 @@
-
-
 #include "./MotionController.h"
 
 namespace SmallRobots {
@@ -19,6 +17,12 @@ namespace SmallRobots {
     };
     void MotionController::run(){
 
+        if (currentMode == DIRECT_VELOCITY) {
+            runDirectVelocityMode();
+            return;  // Skip path planning logic
+        }
+        
+        // Original Dubins path logic
         curPose = odometryCtrl.getCurPose();
 
    
@@ -327,5 +331,75 @@ namespace SmallRobots {
          
         return arrived;
     };
+
+    void MotionController::setFeedbackPose(Pose p)
+    {
+        feedbackPose = p;
+    };
+
+    void MotionController::setDesiredVelocity(float vx, float vy) {
+        desired_vx = vx;
+        desired_vy = vy;
+        currentMode = DIRECT_VELOCITY;
+    }
+
+    void MotionController::setMotionMode(MotionMode mode) {
+        currentMode = mode;
+        if (mode == DUBINS_PATH) {
+            activateNewTarget();  // Reset to path planning
+        }
+    }
+
+    void MotionController::exitDirectVelocityMode() {
+        currentMode = DUBINS_PATH;
+        desired_vx = 0;
+        desired_vy = 0;
+        subPathIndex = 0;
+    }
+
+    void MotionController::setWheelVelocitiesFromDesired() {
+        // Convert (vx, vy) to differential drive commands
+        // For a differential drive robot:
+        // v_robot = linear velocity = sqrt(vx^2 + vy^2)
+        // omega = angular velocity (based on the direction)
+        
+        float v_magnitude = sqrt(desired_vx * desired_vx + desired_vy * desired_vy);
+        
+        if (v_magnitude < 1e-6f) {
+            // Velocity is essentially zero
+            kinematics.stop();
+            vRobot = 0;
+            return;
+        }
+        
+        // Calculate desired heading angle from velocity vector
+        float desired_angle = atan2(desired_vy, desired_vx);
+        
+        // Current robot angle
+        float angle_error = desired_angle - curPose.angle;
+        
+        // Normalize angle error to [-pi, pi]
+        while (angle_error > M_PI) angle_error -= 2 * M_PI;
+        while (angle_error < -M_PI) angle_error += 2 * M_PI;
+        
+        // Simple proportional control for steering
+        float max_turn_radius = 500.0f;  // Maximum turn radius in mm
+        float steering_gain = 0.5f;      // Steering proportional gain
+        
+        float turn_radius = max_turn_radius;
+        if (fabs(angle_error) > 0.05f) {  // Small deadzone
+            turn_radius = 1.0f / (steering_gain * sin(angle_error) / v_magnitude + 1e-6f);
+            turn_radius = constrain(turn_radius, -max_turn_radius, max_turn_radius);
+        }
+        
+        // Set robot velocity and radius
+        vRobot = v_magnitude;
+        kinematics.move(vRobot, turn_radius);
+    }
+
+    void MotionController::runDirectVelocityMode() {
+        curPose = odometryCtrl.getCurPose();
+        setWheelVelocitiesFromDesired();
+    }
 
 }; // namespace SmallRobots

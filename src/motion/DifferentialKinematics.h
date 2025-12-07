@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #include "./Vector.h"
 #include "control/SmallRobotEventBus.h"
-
+#include "./structs.h"
 
 #define RADIUS_STREIGHT (std::numeric_limits<float>::infinity())
 #define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why? TODO SET AUTOMATICALLY FROM ZOOIDDRIVE
@@ -24,13 +24,6 @@ namespace SmallRobots {
         float left;
         float right;
     };
-
-    typedef struct Pose {
-        float x =0;
-        float y =0;
-        float angle=0;
-    } Pose;
-
 
 
     class DifferentialKinematics {

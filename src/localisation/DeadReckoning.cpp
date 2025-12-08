@@ -56,10 +56,14 @@ namespace SmallRobots {
         curPose.angle = 0;
 
     }; 
-    void DeadReckoning::setCurPose(float x, float y, float angle){
+    void DeadReckoning::setCurPose(float x, float y, float angle, AngleUnit angleUnit){
         curPose.x = x;
         curPose.y = y;
-        curPose.angle = angle;
+        if (angleUnit == AngleUnit::DEGREES) {
+            curPose.angle = angle * M_PI / 180.0f;
+        } else {
+            curPose.angle = angle;
+        }
     };
 
 }; // namespace SmallRobots

@@ -94,7 +94,7 @@ namespace SmallRobots {
         move(abs(speed), 0.0f);
     };
 
-
+    // mm/s, mm/s, rad/s
     Pose DifferentialKinematics::getDeltaPose(unsigned long deltaT, Pose lastPose, String type){ //delataT in micros as SimpleFoc reads velocity /micros ?!
 
         MotorsVelocity vel;

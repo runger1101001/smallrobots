@@ -3,6 +3,11 @@
 
 namespace SmallRobots {
 
+    enum class AngleUnit {
+        RADIANS,
+        DEGREES
+    };
+
 
     struct RobotState {
         Vector2D position;

@@ -121,16 +121,29 @@ namespace SmallRobots {
         point_and_shoot.setDesiredVelocity(vx, vy, speed);
         currentMode = POINT_AND_SHOOT;
     }
-    void MotionController::setTargetPointAndShoot(const Pose& target, float speed) {
+    void MotionController::setTargetPointAndShoot(const Pose& target, float speed, AngleUnit angleUnit) {
         enableMotors();
-        point_and_shoot.setTarget(target, curPose, speed);
+        
+        // Convert target angle from degrees to radians
+        Pose target_radians = target;
+        if (angleUnit == AngleUnit::DEGREES) {
+            target_radians.angle = target.angle * M_PI / 180.0f;
+        }
+        point_and_shoot.setTarget(target_radians, curPose, speed);
         currentMode = POINT_AND_SHOOT;
     }
-    void MotionController::setTargetDubinsPath(const Pose& target,float speed){
+    void MotionController::setTargetDubinsPath(const Pose& target, float speed, AngleUnit angleUnit){
         enableMotors();
         dubin_controller.setRobotVelocity(speed);
         dubin_controller.activateNewTarget();
-        dubin_controller.setPoseToReplacePath(target); //addPoseToPathAndGoThereFirst(target);
+        
+        // Convert target angle from degrees to radians
+        Pose target_radians = target;
+        if (angleUnit == AngleUnit::DEGREES) {
+            target_radians.angle = target.angle * M_PI / 180.0f;
+        }
+
+        dubin_controller.setPoseToReplacePath(target_radians); //addPoseToPathAndGoThereFirst(target);
         currentMode = DUBINS_PATH;
     };
     

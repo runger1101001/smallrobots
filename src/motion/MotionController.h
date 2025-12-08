@@ -38,8 +38,8 @@ namespace SmallRobots {
             void run();
 
             void setDesiredVelocityPointAndShoot(float vx, float vy, float speed = -1.0f);
-            void setTargetPointAndShoot(const Pose& target, float speed = -1.0f);
-            void setTargetDubinsPath(const Pose& target, float speed = -1.0f);
+            void setTargetPointAndShoot(const Pose& target, float speed = -1.0f, AngleUnit angleUnit);
+            void setTargetDubinsPath(const Pose& target, float speed = -1.0f, AngleUnit angleUnit);
 
             void stop();
             void enableMotors();

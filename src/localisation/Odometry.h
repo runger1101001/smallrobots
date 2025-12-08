@@ -16,7 +16,7 @@ namespace SmallRobots {
             void resetLastTime();
             Pose getCurPose();
             void resetCurPose(); //to start pose 0,0,0
-            void setCurPose(float x, float y, float angle);
+            void setCurPose(float x, float y, float angle, AngleUnit angleUnit);
             Pose getDeltaPose() { return deltaPose; }
             unsigned long getDeltaT() { return deltaT; }
 

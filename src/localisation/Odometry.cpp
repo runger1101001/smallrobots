@@ -57,10 +57,14 @@ namespace SmallRobots {
         curPose.angle = 0;
 
     }; 
-    void Odometry::setCurPose(float x, float y, float angle){
+    void Odometry::setCurPose(float x, float y, float angle, AngleUnit angleUnit){
         curPose.x = x;
         curPose.y = y;
-        curPose.angle = angle;
+        if (angleUnit == AngleUnit::DEGREES) {
+            curPose.angle = angle * M_PI / 180.0f;
+        } else {
+            curPose.angle = angle;
+        }
     };
 
 

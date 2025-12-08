@@ -7,6 +7,7 @@
 #include "./DifferentialKinematics.h"
 #include "./DifferentialPathPlanner.h"
 #include "../localisation/Odometry.h"
+#include "PointAndShoot.h"
 
 #define DEFAULT_ROBOT_SPEED 100 //mm/s
 #define DEFAULT_PATH_RADIUS 50 //mm
@@ -23,7 +24,8 @@ namespace SmallRobots {
 
     enum MotionMode {
         DUBINS_PATH,      // Original path planning mode
-        DIRECT_VELOCITY   // Direct velocity command mode
+        DIRECT_VELOCITY,  // Direct velocity command mode
+        POINT_AND_SHOOT   // Two-step: rotate first, then move
     };
 
 
@@ -105,9 +107,20 @@ namespace SmallRobots {
 
             void setFeedbackPose(Pose p);
 
+            // Functions for direct velocity control mode (not sure it works)
             // Set direct velocity (vx, vy in mm/s) - bypasses path planning
             void setDesiredVelocity(float vx, float vy);
-            
+
+            // Functions for Point and Shoot mode
+            void setDesiredVelocityPointAndShoot(float vx, float vy); //sets desired velocity for point and shoot mode
+           
+            // has to be updated when desired robot velocity is set over osc
+            // bypasses path planning with dubin paths
+            void setPointAndShootParams(float tolerance_rad, float speed_rad_s, float max_vel_mm_s){
+                point_and_shoot.setHeadingTolerance(tolerance_rad);
+                point_and_shoot.setRobotSpeed(max_vel_mm_s);
+            } //TODO change
+
             // Switch between motion modes
             void setMotionMode(MotionMode mode);
             
@@ -121,6 +134,7 @@ namespace SmallRobots {
             String curDirName = "N";
 
         private:
+            PointAndShoot point_and_shoot;
             MotionMode currentMode = DUBINS_PATH;
             float desired_vx = 0;  // Desired velocity x component (mm/s)
             float desired_vy = 0;  // Desired velocity y component (mm/s)
@@ -128,6 +142,7 @@ namespace SmallRobots {
             // Direct velocity mode execution
             void runDirectVelocityMode();
             void setWheelVelocitiesFromDesired();
+            void runPointAndShootMode();
     };
 
 }; //end namespace SmallRobots

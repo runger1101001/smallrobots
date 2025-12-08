@@ -6,8 +6,10 @@ namespace SmallRobots {
     //  MotionController
     //------------------------------------------------------------------------------------------------------------------
 
-    MotionController::MotionController(DifferentialKinematics& drive, Odometry& _odometryCtrl) : kinematics(drive), odometryCtrl(_odometryCtrl) {
-    };
+    MotionController::MotionController(DifferentialKinematics& drive, Odometry& _odometryCtrl) 
+        : kinematics(drive), odometryCtrl(_odometryCtrl), point_and_shoot(drive)
+    {
+    }
 
     MotionController::~MotionController() {
     };
@@ -22,6 +24,11 @@ namespace SmallRobots {
             return;  // Skip path planning logic
         }
         
+        if (currentMode == POINT_AND_SHOOT) {
+            runPointAndShootMode();
+            return;
+        }
+    
         // Original Dubins path logic
         curPose = odometryCtrl.getCurPose();
 
@@ -379,8 +386,10 @@ namespace SmallRobots {
         float angle_error = desired_angle - curPose.angle;
         
         // Normalize angle error to [-pi, pi]
-        while (angle_error > M_PI) angle_error -= 2 * M_PI;
-        while (angle_error < -M_PI) angle_error += 2 * M_PI;
+        // while (angle_error > M_PI) angle_error -= 2 * M_PI;
+        // while (angle_error < -M_PI) angle_error += 2 * M_PI;
+        // Fastest AND clear:
+        angle_error = fmod(angle_error + M_PI, 2 * M_PI) - M_PI;
         
         // Simple proportional control for steering
         float max_turn_radius = 500.0f;  // Maximum turn radius in mm
@@ -400,6 +409,16 @@ namespace SmallRobots {
     void MotionController::runDirectVelocityMode() {
         curPose = odometryCtrl.getCurPose();
         setWheelVelocitiesFromDesired();
+    }
+
+    void MotionController::setDesiredVelocityPointAndShoot(float vx, float vy) {
+        point_and_shoot.setDesiredVelocity(vx, vy);
+        currentMode = POINT_AND_SHOOT;
+    }
+
+    void MotionController::runPointAndShootMode() {
+        curPose = odometryCtrl.getCurPose();
+        point_and_shoot.run(curPose);
     }
 
 }; // namespace SmallRobots

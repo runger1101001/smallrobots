@@ -62,5 +62,4 @@ namespace SmallRobots {
         curPose.angle = angle;
     };
 
-
 }; // namespace SmallRobots

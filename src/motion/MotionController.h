@@ -8,23 +8,13 @@
 #include "./DifferentialPathPlanner.h"
 #include "../localisation/Odometry.h"
 #include "PointAndShoot.h"
+#include "DubinController.h"
 
-#define DEFAULT_ROBOT_SPEED 100 //mm/s
-#define DEFAULT_PATH_RADIUS 50 //mm
 
 namespace SmallRobots {
 
-    enum PATHBEHAVIOURS {
-        PAUSE,
-        LOOP,
-        END,
-        CONTINUE,
-        RESTART,
-    };
-
     enum MotionMode {
         DUBINS_PATH,      // Original path planning mode
-        DIRECT_VELOCITY,  // Direct velocity command mode
         POINT_AND_SHOOT   // Two-step: rotate first, then move
     };
 
@@ -34,115 +24,50 @@ namespace SmallRobots {
 
         protected:
 
-            std::vector<Pose> path;
-            int curPathIndex = 0;
-
             Pose curPose;
             Pose targetPose;
-            Pose feedbackPose; //from camera/localisation system
-
-            Vector ICC; //Instantaneous Center of Curvature
-            float R = MINRADIUS; //dist between robot's pose and its ICC
-
             float vRobot = DEFAULT_ROBOT_SPEED; //mm/s
-
-            float vR =0.00;
-            float vL =0.00;
-
-            float targetAngle=0;
-
-            float arriveDistance = 20; //precission of arriving behaviour
-            float arriveAngleDistance = 0;
-
-            float curDistance = 0;
-            float lastDistance = 10000000000;
-
-            
-            Vector curV;
-
-            int subPathIndex =-1; //to go through dubin path segments
-            bool pathStateChanged = false;
-            int pathState =0;
         public:
 
                     
                     
-            MotionController(DifferentialKinematics& drive, Odometry& odommetryCtrl); //, DifferentialPathPlanner& pathPlanner);
+            MotionController(DifferentialKinematics& drive, Odometry& odommetryCtrl);
             ~MotionController();
-
-            int pathBehaviour = END ; //PATHBEHAVIOURS
 
             void setup();
             void run();
 
-            void activateNewTarget();
-            void addPoseToPath(Pose p);
-            void addPoseToPathAndGoThereFirst(Pose p);
-            void setPoseToReplacePath(Pose p);
-            void addPoseListToPath(std::vector<Pose> poses);
-            void addPoseListToPathAndGoThereFirst(std::vector<Pose> poses);
-            void setPoseListToReplacePath(std::vector<Pose> poses);
+            void setDesiredVelocityPointAndShoot(float vx, float vy, float speed = -1.0f);
+            void setTargetPointAndShoot(const Pose& target, float speed = -1.0f);
+            void setTargetDubinsPath(const Pose& target, float speed = -1.0f);
 
-            void deletePath();
-            void setLoopPath();
-            void setPausePath();
-            void setContinuePath();
-            void setEndPath();
-            void setRestartPath();
-
-
-            void calculateDubinForNextPoseInPath(); //get next pose in path, calculate dubin path from current pose and target pose
-            void setWheelVelocitiesSeg1(); //ARC left or right with minRad
-            void setWheelVelocitiesSeg2(); //STRAIGHT or left or right ARC
-            void setWheelVelocitiesSeg3(); //ARC left or right
             void stop();
             void enableMotors();
 
+            //for both modes
             void setRobotVelocity(float _vRobot = DEFAULT_ROBOT_SPEED); //in mm/s
-            void setPathRadius(float _radius = DEFAULT_PATH_RADIUS); //in mm , absolute value
-            void setPathBevahiourType(int type);
 
-            bool loopPath(); //returns true if there is more than one pose in the path
-            bool checkIfArrived();
+            //for dubins path mode
+            void setDubinsPathRadius(float _radius);
 
-            void setFeedbackPose(Pose p);
-
-            // Functions for direct velocity control mode (not sure it works)
-            // Set direct velocity (vx, vy in mm/s) - bypasses path planning
-            void setDesiredVelocity(float vx, float vy);
-
-            // Functions for Point and Shoot mode
-            void setDesiredVelocityPointAndShoot(float vx, float vy); //sets desired velocity for point and shoot mode
-           
+            //for point and shoot mode
             // has to be updated when desired robot velocity is set over osc
             // bypasses path planning with dubin paths
             void setPointAndShootParams(float tolerance_rad, float speed_rad_s, float max_vel_mm_s){
                 point_and_shoot.setHeadingTolerance(tolerance_rad);
-                point_and_shoot.setRobotSpeed(max_vel_mm_s);
+                point_and_shoot.setRobotVelocity(max_vel_mm_s);
             } //TODO change
 
-            // Switch between motion modes
-            void setMotionMode(MotionMode mode);
-            
-            // Stop direct velocity control and return to path planning
-            void exitDirectVelocityMode();
-            
+
             DifferentialKinematics& kinematics;
             Odometry& odometryCtrl;
-            DifferentialPathPlanner pathPlanner = DifferentialPathPlanner();
-            
-            String curDirName = "N";
 
         private:
-            PointAndShoot point_and_shoot;
             MotionMode currentMode = DUBINS_PATH;
-            float desired_vx = 0;  // Desired velocity x component (mm/s)
-            float desired_vy = 0;  // Desired velocity y component (mm/s)
-            
-            // Direct velocity mode execution
-            void runDirectVelocityMode();
-            void setWheelVelocitiesFromDesired();
-            void runPointAndShootMode();
+
+            PointAndShoot point_and_shoot;
+            DubinController dubin_controller;
+
     };
 
 }; //end namespace SmallRobots

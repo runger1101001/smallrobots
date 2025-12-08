@@ -154,8 +154,21 @@ void PointAndShoot::setHeadingTolerance(float tolerance_rad) {
 }
 
 
-void PointAndShoot::setRobotSpeed(float speed) {
-    robotSpeed = speed;
-}
+void PointAndShoot::setRobotVelocity( float _vRobot){ //in mm/s
+    robotSpeed =_vRobot;
+};
+void PointAndShoot::setRobotVelocityAndActivate(float _vRobot){ //in mm/s and send move command with current radius
+        //make sure that the sign of new velocity is the same as in current movement
+    float speed = kinematics.getCurRobotSpeed();
+    if (speed >= 0)robotSpeed = abs( _vRobot );
+    else robotSpeed = - abs(_vRobot);
+    robotSpeed =_vRobot;
+    float radius = kinematics.getCurRobotRadius(); 
+    if (state != PAS_IDLE && state != PAS_STOP){
+        kinematics.move(robotSpeed, radius);
+    }
+
+};
+
 
 } // namespace SmallRobots

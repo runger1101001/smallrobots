@@ -39,8 +39,9 @@ public:
     // Configure parameters
     void setHeadingTolerance(float tolerance_rad);
 
-    void setRobotSpeed(float speed);
-    
+    void setRobotVelocity(float _vRobot);
+    void setRobotVelocityAndActivate(float _vRobot);
+
     // Get current state
     PointAndShootState getState() const { return state; }
    
@@ -48,7 +49,8 @@ public:
     // Stop movement
     void stop();
     
-    
+protected:
+    Pose curPose;
 private:
     DifferentialKinematics& kinematics;
     
@@ -59,7 +61,7 @@ private:
     float desired_heading = 0.0f;
     float heading_tolerance = 2;
 
-    float robotSpeed = 100.0f;  // Speed value used for both rotate and move
+    float robotSpeed = DEFAULT_ROBOT_SPEED;  // Speed value used for both rotate and move
        
     // Private step functions
     void stepStartRotating(const Pose& current_pose);

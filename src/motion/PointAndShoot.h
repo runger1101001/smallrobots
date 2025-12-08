@@ -64,7 +64,9 @@ private:
     float robotSpeed = DEFAULT_ROBOT_SPEED;  // Speed value used for both rotate and move
        
     int rotationDirection;  // 1 for CCW, -1 for CW
-    
+    Vector start_moving_pos;  // Position when we started moving towards target
+    float target_distance;      // Distance to travel to reach target
+
     // Private step functions
     void stepStartRotating(const Pose& current_pose);
     void stepRotateToHeading(const Pose& current_pose);

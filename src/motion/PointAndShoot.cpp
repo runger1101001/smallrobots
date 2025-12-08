@@ -119,17 +119,27 @@ void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
 
 // Step 3: Send move straight command once
 void PointAndShoot::stepStartMoving(const Pose& current_pose) {
+    // Calculate distance to target and store it
+    float dx = target_pose.x - current_pose.x;
+    float dy = target_pose.y - current_pose.y;
+    target_distance = sqrt(dx * dx + dy * dy);
+    
+    // Store starting position
+    start_moving_pos = Vector(current_pose.x, current_pose.y);
+    
     kinematics.move(robotSpeed, 1e6f);  // Very large radius = straight line
     state = PAS_MOVING;
 }
 
 // Step 4: Check if target reached (only in TARGET mode)
 void PointAndShoot::stepCheckTargetReached(const Pose& current_pose) {
-    float dx = target_pose.x - current_pose.x;
-    float dy = target_pose.y - current_pose.y;
-    float distance = sqrt(dx * dx + dy * dy);
+    // Calculate travelled distance from start of movement
+    float dx = current_pose.x - start_moving_pos.x;
+    float dy = current_pose.y - start_moving_pos.y;
+    float travelled_distance = sqrt(dx * dx + dy * dy);
     
-    if (distance < 0.01f) {  // Reached target location
+    // Stop when travelled distance >= target distance
+    if (travelled_distance >= target_distance) {
         state = PAS_START_ROTATE_AT_TARGET;
     }
 }

@@ -25,12 +25,6 @@ public:
         return (distance > distanceThreshold) || (angleDiff > angleThreshold);
     }
 
-    void reset(const Pose& odom, Pose& deadReckoning) {
-        
-        deadReckoning.x = odom.x;
-        deadReckoning.y = odom.y;
-        deadReckoning.angle = odom.angle;
-    }
 
     void setThresholds(float distThresh, float angleThresh) {
         distanceThreshold = distThresh;

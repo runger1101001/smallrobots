@@ -59,10 +59,12 @@ private:
     Pose target_pose;
     
     float desired_heading = 0.0f;
-    float heading_tolerance = 2;
+    float heading_tolerance = 0.02f; // Radians (~1.15 degrees)
 
     float robotSpeed = DEFAULT_ROBOT_SPEED;  // Speed value used for both rotate and move
        
+    int rotationDirection;  // 1 for CCW, -1 for CW
+    
     // Private step functions
     void stepStartRotating(const Pose& current_pose);
     void stepRotateToHeading(const Pose& current_pose);

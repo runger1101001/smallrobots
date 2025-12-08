@@ -54,8 +54,8 @@ namespace SmallRobots {
             // has to be updated when desired robot velocity is set over osc
             // bypasses path planning with dubin paths
             void setPointAndShootParams(float tolerance_rad, float speed_rad_s, float max_vel_mm_s){
-                point_and_shoot.setHeadingTolerance(tolerance_rad);
-                point_and_shoot.setRobotVelocity(max_vel_mm_s);
+                // point_and_shoot.setHeadingTolerance(tolerance_rad);
+                // point_and_shoot.setRobotVelocity(max_vel_mm_s);
             } //TODO change
 
 

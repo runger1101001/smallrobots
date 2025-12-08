@@ -87,6 +87,12 @@ namespace SmallRobots {
     void DifferentialKinematics::rotate(float speed) {
         move(speed, 0.0f);
     };
+    void DifferentialKinematics::rotateCW(float speed) { //positive speed or will be absolute value taken
+        move(-abs(speed), 0.0f);
+    };
+    void DifferentialKinematics::rotateCCW(float speed)  {  //positive speed or will be absolute value taken
+        move(abs(speed), 0.0f);
+    };
 
 
     Pose DifferentialKinematics::getDeltaPose(unsigned long deltaT, Pose lastPose, String type){ //delataT in micros as SimpleFoc reads velocity /micros ?!

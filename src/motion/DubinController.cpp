@@ -258,16 +258,20 @@ namespace SmallRobots {
     };
 
     void DubinController::setRobotVelocity( float _vRobot){ //in mm/s
-       vRobot =_vRobot;
+       if(_vRobot >=0){ //-1 resets to the last set speed
+           vRobot =_vRobot;
+       }
     };
     void DubinController::setRobotVelocityAndActivate(float _vRobot){ //in mm/s and send move command with current radius
-         //make sure that the sign of new velocity is the same as in current movement
-        float speed = kinematics.getCurRobotSpeed();
-        if (speed >= 0)vRobot = abs( _vRobot );
-        else vRobot = - abs(_vRobot);
-        vRobot =_vRobot;
-        float radius = kinematics.getCurRobotRadius();
-        if (subPathIndex !=-1 )kinematics.move(vRobot, radius);
+        if(_vRobot >=0){ //-1 resets to the last set speed
+            //make sure that the sign of new velocity is the same as in current movement
+            float speed = kinematics.getCurRobotSpeed();
+            if (speed >= 0)vRobot = abs( _vRobot );
+            else vRobot = - abs(_vRobot);
+            vRobot =_vRobot;
+            float radius = kinematics.getCurRobotRadius();
+            if (subPathIndex !=-1 )kinematics.move(vRobot, radius);
+        }
     };
 
     void DubinController::setPathRadius(float _radius){ //this is only for the next move command from dubin path

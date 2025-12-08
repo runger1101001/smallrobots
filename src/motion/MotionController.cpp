@@ -95,13 +95,16 @@ namespace SmallRobots {
 
     void MotionController::setRobotVelocity( float _vRobot){ //in mm/s
 
-        vRobot = _vRobot;
-        if (currentMode == DUBINS_PATH){
-            dubin_controller.setRobotVelocityAndActivate(_vRobot); //active
-            point_and_shoot.setRobotVelocity(_vRobot); //passive
-        } else if (currentMode == POINT_AND_SHOOT){
-            point_and_shoot.setRobotVelocityAndActivate(_vRobot); //active
-            dubin_controller.setRobotVelocity(_vRobot); //passive
+        if (_vRobot >=0){ //-1 resets to the last set speed
+            vRobot =_vRobot;
+            
+            if (currentMode == DUBINS_PATH){
+                dubin_controller.setRobotVelocityAndActivate(_vRobot); //active
+                point_and_shoot.setRobotVelocity(_vRobot); //passive
+            } else if (currentMode == POINT_AND_SHOOT){
+                point_and_shoot.setRobotVelocityAndActivate(_vRobot); //active
+                dubin_controller.setRobotVelocity(_vRobot); //passive
+            }
         }
     };
 

@@ -47,7 +47,9 @@ namespace SmallRobots {
             void turnLeftBackward(float speed, float radius);
             void turnRightBackward(float speed, float radius);
 
-            virtual void rotate(float speed);
+            void rotate(float speed);
+            void rotateCW(float speed); //positive speed or will be absolute value taken
+            void rotateCCW(float speed);  //positive speed or will be absolute value taken
 
             virtual void setSpeed(float left, float right)=0;
             virtual void stop()=0;

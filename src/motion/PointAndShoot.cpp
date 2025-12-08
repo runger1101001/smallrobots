@@ -81,23 +81,38 @@ void PointAndShoot::setTarget(const Pose& target, const Pose& current_pose, floa
     state = PAS_START_ROTATING;
 }
 
-// Step 1: Calculate target angle and send rotate command once
+// Step 1: Calculate target angle and send rotate command with direction
 void PointAndShoot::stepStartRotating(const Pose& current_pose) {
-    kinematics.rotate(robotSpeed);
+    float angle_error = desired_heading - current_pose.angle;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    // Choose rotation direction based on shortest angular distance
+    if (angle_error > 0) {
+        rotationDirection = 1;  // Counter-clockwise
+        kinematics.rotateCCW(robotSpeed);  // Counter-clockwise
+    } else {
+        rotationDirection = -1;  // Clockwise
+        kinematics.rotateCW(robotSpeed);   // Clockwise
+    }
     state = PAS_ROTATING;
 }
+
 
 // Step 2: Check if arrived at target heading
 void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
     float angle_error = desired_heading - current_pose.angle;
     
     // Normalize angle error to [-π, π]
-    // while (angle_error > M_PI) angle_error -= 2 * M_PI;
-    // while (angle_error < -M_PI) angle_error += 2 * M_PI;
-    // Fastest AND clear:
-    angle_error = fmod(angle_error + M_PI, 2 * M_PI) - M_PI;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
     
+    // Check if we've arrived, considering rotation direction
     if (fabs(angle_error) < heading_tolerance) {
+        state = PAS_START_MOVING;
+    }
+    // Verify we're still rotating in the correct direction
+    else if ((rotationDirection > 0 && angle_error < 0) || 
+             (rotationDirection < 0 && angle_error > 0)) {
+        // Overshot the target, transition to next state
         state = PAS_START_MOVING;
     }
 }
@@ -119,9 +134,19 @@ void PointAndShoot::stepCheckTargetReached(const Pose& current_pose) {
     }
 }
 
-// Step 5: Send rotate to target angle command once
+// Step 5: Send rotate to target angle command with direction
 void PointAndShoot::stepStartRotateAtTarget(const Pose& current_pose) {
-    kinematics.rotate(robotSpeed);
+    float angle_error = target_pose.angle - current_pose.angle;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    // Choose rotation direction based on shortest angular distance
+    if (angle_error > 0) {
+        rotationDirection = 1;  // Counter-clockwise
+        kinematics.rotateCCW(robotSpeed);  // Counter-clockwise
+    } else {
+        rotationDirection = -1;  // Clockwise
+        kinematics.rotateCW(robotSpeed);   // Clockwise
+    }
     state = PAS_ROTATE_AT_TARGET;
 }
 
@@ -130,13 +155,20 @@ void PointAndShoot::stepRotateAtTarget(const Pose& current_pose) {
     float angle_error = target_pose.angle - current_pose.angle;
     
     // Normalize angle error to [-π, π]
-    while (angle_error > M_PI) angle_error -= 2 * M_PI;
-    while (angle_error < -M_PI) angle_error += 2 * M_PI;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
     
+    // Check if we've arrived, considering rotation direction
     if (fabs(angle_error) < heading_tolerance) {
         state = PAS_STOP;
     }
+    // Verify we're still rotating in the correct direction
+    else if ((rotationDirection > 0 && angle_error < 0) || 
+             (rotationDirection < 0 && angle_error > 0)) {
+        // Overshot the target, transition to stop
+        state = PAS_STOP;
+    }
 }
+
 
 // Step 7: Stop and go idle
 void PointAndShoot::stepStop(const Pose& current_pose) {
@@ -155,17 +187,19 @@ void PointAndShoot::setHeadingTolerance(float tolerance_rad) {
 
 
 void PointAndShoot::setRobotVelocity( float _vRobot){ //in mm/s
-    robotSpeed =_vRobot;
+    if(_vRobot >=0) robotSpeed = _vRobot; //-1 resets to the last set speed
 };
 void PointAndShoot::setRobotVelocityAndActivate(float _vRobot){ //in mm/s and send move command with current radius
         //make sure that the sign of new velocity is the same as in current movement
-    float speed = kinematics.getCurRobotSpeed();
-    if (speed >= 0)robotSpeed = abs( _vRobot );
-    else robotSpeed = - abs(_vRobot);
-    robotSpeed =_vRobot;
-    float radius = kinematics.getCurRobotRadius(); 
-    if (state != PAS_IDLE && state != PAS_STOP){
-        kinematics.move(robotSpeed, radius);
+    if(_vRobot >=0){ 
+        float speed = kinematics.getCurRobotSpeed();
+        if (speed >= 0)robotSpeed = abs( _vRobot );
+        else robotSpeed = - abs(_vRobot);
+        robotSpeed =_vRobot;
+        float radius = kinematics.getCurRobotRadius(); 
+        if (state != PAS_IDLE && state != PAS_STOP){
+            kinematics.move(robotSpeed, radius);
+        }
     }
 
 };

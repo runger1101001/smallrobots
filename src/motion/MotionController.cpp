@@ -115,6 +115,12 @@ namespace SmallRobots {
     // void MotionController::setPathBevahiourType(int type){
     //     pathBehaviour = type;
     // };
+    void MotionController::setDesiredVelocitySmoothedPointAndShoot(float vx, float vy, float speed, float smoothing_factor, 
+                                                                   float significant_heading_change_rad){
+        enableMotors();
+        point_and_shoot.setDesiredVelocitySmoothed(vx, vy, speed, smoothing_factor, significant_heading_change_rad);
+        currentMode = POINT_AND_SHOOT;
+    }
 
     void MotionController::setDesiredVelocityPointAndShoot(float vx, float vy, float speed) {
         enableMotors();

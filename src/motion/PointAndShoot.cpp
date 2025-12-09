@@ -23,13 +23,23 @@ void PointAndShoot::run(const Pose& current_pose) {
             break;
             
         case PAS_START_MOVING:
-            stepStartMoving(current_pose);
+         if (mode == PointAndShootMode::TARGET) {
+                stepStartMovingTarget(current_pose);
+            } else if (mode == PointAndShootMode::INFINITE) {
+                stepStartMovingInfiniteStraight();
+            }
             break;
             
         case PAS_MOVING:
             if (mode == PointAndShootMode::TARGET) {
                 stepCheckTargetReached(current_pose);
             }
+            // INFINITE mode: keep moving, no special logic needed
+            break;
+            
+        case PAS_SMOOTH_MOVING:
+            // Continuously curve toward desired heading while moving
+            stepMovingSmoothCurve(current_pose);
             break;
             
         case PAS_START_ROTATE_AT_TARGET:
@@ -53,14 +63,112 @@ void PointAndShoot::run(const Pose& current_pose) {
 // INFINITE Mode: Set desired velocity
 void PointAndShoot::setDesiredVelocity(float vx, float vy, float speed) {
     mode = PointAndShootMode::INFINITE;
-    desired_heading = atan2(vy, vx);
+    float new_heading = atan2(vy, vx);
     
-    // Optionally update speed, otherwise keep existing speedValue
+    // Only update state if heading has changed significantly
+    float heading_diff = new_heading - desired_heading;
+    heading_diff = atan2(sin(heading_diff), cos(heading_diff));
+    
+    if (fabs(heading_diff) > heading_tolerance) {
+        // Significant heading change - restart rotation
+        desired_heading = new_heading;
+        state = PAS_START_ROTATING;
+    } else if (state == PAS_IDLE || state == PAS_STOP) {
+        // Currently idle/stopped - start moving in current direction
+        desired_heading = new_heading;
+        state = PAS_START_ROTATING;
+    }
+    // else: small heading change while already moving - ignore to avoid jerkiness
+    
+    // Update speed if provided
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+}
+
+// SMOOTHED_LINE_FOLLOWING Mode: Set desired velocity with smooth heading updates
+// Call this every time you receive new direction data from server (e.g., every 100ms)
+// This mode curves the robot toward the desired heading while moving
+void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed, 
+                                               float smoothing_factor, 
+                                               float significant_heading_change_rad) {
+    mode = PointAndShootMode::SMOOTHED_LINE_FOLLOWING;
+    
+    // Store smoothing parameters for use in run()
+    this->smoothing_factor = smoothing_factor;
+    this->significant_heading_change_rad = significant_heading_change_rad;
+    
+    // Update the new heading target
+    float new_heading = atan2(vy, vx);
+    
+    // Low-pass filter: blend new heading with current smoothed heading
+    float heading_diff = new_heading - smoothed_desired_heading;
+    heading_diff = atan2(sin(heading_diff), cos(heading_diff));
+    
+    smoothed_desired_heading = smoothed_desired_heading + heading_diff * smoothing_factor;
+    
+    // Normalize smoothed heading to [-π, π]
+    smoothed_desired_heading = atan2(sin(smoothed_desired_heading), cos(smoothed_desired_heading));
+    
+    // Update desired heading to the smoothed value
+    desired_heading = smoothed_desired_heading;
+    
+    // Update speed if provided
     if (speed >= 0.0f) {
         robotSpeed = speed;
     }
     
-    state = PAS_START_ROTATING;
+    // Start smooth movement if idle/stopped
+    //if (state == PAS_IDLE || state == PAS_STOP) {
+        state = PAS_SMOOTH_MOVING;  // Go directly to smooth moving
+        kinematics.move(robotSpeed, 1e6f);  // Start moving straight
+    //}
+    // If already in smooth movement, just update desired_heading (will be used in next run() call)
+}
+
+// Update desired heading while moving (smoother continuous updates)
+// void PointAndShoot::updateDesiredHeading(float vx, float vy, float significant_heading_change_rad) {
+//     float new_heading = atan2(vy, vx);
+//     float heading_diff = new_heading - desired_heading;
+//     heading_diff = atan2(sin(heading_diff), cos(heading_diff));
+    
+//     // Only restart if change is significant
+//     if (fabs(heading_diff) > significant_heading_change_rad) {
+//         desired_heading = new_heading;
+//         state = PAS_START_ROTATING;
+//     } else {
+//         // Smoothly update heading without restarting
+//         desired_heading = new_heading;
+//     }
+// }
+
+// Smooth heading update with low-pass filtering - BEST FOR LINE FOLLOWING
+void PointAndShoot::updateDesiredHeadingSmoothed(float vx, float vy, float smoothing_factor, float significant_heading_change_rad) {
+    float new_heading = atan2(vy, vx);
+    
+    // Low-pass filter: blend new heading with current smoothed heading
+    // smoothing_factor = 0.0 -> no change (fully smoothed)
+    // smoothing_factor = 1.0 -> instant update (no filtering)
+    float heading_diff = new_heading - smoothed_desired_heading;
+    // Normalize to [-π, π]
+    heading_diff = atan2(sin(heading_diff), cos(heading_diff));
+    
+    smoothed_desired_heading = smoothed_desired_heading + heading_diff * smoothing_factor;
+    
+    // Normalize smoothed heading to [-π, π]
+    smoothed_desired_heading = atan2(sin(smoothed_desired_heading), cos(smoothed_desired_heading));
+    
+    // Only restart movement if smoothed heading has changed significantly
+    float actual_heading_diff = smoothed_desired_heading - desired_heading;
+    actual_heading_diff = atan2(sin(actual_heading_diff), cos(actual_heading_diff));
+    
+    if (fabs(actual_heading_diff) > significant_heading_change_rad) {
+        desired_heading = smoothed_desired_heading;
+        state = PAS_START_ROTATING;
+    } else {
+        // Small adjustment - update desired heading gradually without restarting
+        desired_heading = smoothed_desired_heading;
+    }
 }
 
 // TARGET Mode: Set target pose
@@ -85,6 +193,11 @@ void PointAndShoot::setTarget(const Pose& target, const Pose& current_pose, floa
 void PointAndShoot::stepStartRotating(const Pose& current_pose) {
     float angle_error = desired_heading - current_pose.angle;
     angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    if (fabs(angle_error) < heading_tolerance) {
+        state = PAS_START_MOVING;
+        return;
+    }
     
     // Choose rotation direction based on shortest angular distance
     if (angle_error > 0) {
@@ -118,17 +231,64 @@ void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
 }
 
 // Step 3: Send move straight command once
-void PointAndShoot::stepStartMoving(const Pose& current_pose) {
+// TARGET Mode: Calculate target distance and store starting position
+void PointAndShoot::stepStartMovingTarget(const Pose& current_pose) {
     // Calculate distance to target and store it
     float dx = target_pose.x - current_pose.x;
     float dy = target_pose.y - current_pose.y;
     target_distance = sqrt(dx * dx + dy * dy);
+
+    if (target_distance < dist_tolerance) {  // Already at target position
+        state = PAS_START_ROTATE_AT_TARGET;
+        return;
+    }  
     
     // Store starting position
     start_moving_pos = Vector(current_pose.x, current_pose.y);
     
     kinematics.move(robotSpeed, 1e6f);  // Very large radius = straight line
     state = PAS_MOVING;
+}
+// INFINITE Mode: Send move straight command once
+void PointAndShoot::stepStartMovingInfiniteStraight() {
+    kinematics.move(robotSpeed, 1e6f);  // Very large radius = straight line
+    state = PAS_MOVING;
+}
+
+// SMOOTHED_LINE_FOLLOWING: Continuously curve toward desired heading while moving
+void PointAndShoot::stepMovingSmoothCurve(const Pose& current_pose) {
+    // Calculate the angular difference between current heading and desired heading
+    float heading_error = desired_heading - current_pose.angle;
+    
+    // Normalize to [-π, π]
+    heading_error = atan2(sin(heading_error), cos(heading_error));
+    
+    // If heading is already correct, transition to straight movement
+    if (fabs(heading_error) < heading_tolerance) {
+        state = PAS_START_MOVING;  // Transition to normal movement
+        return;
+    }
+    
+    // Calculate radius to achieve smooth curve toward desired heading
+    // Smaller radius = tighter curve = faster heading change
+    // The radius is calculated such that the robot curves toward the target heading
+    
+    // Using simple proportional control: radius based on heading error
+    // heading_error ranges from -π to π, we want positive radius
+    float curvature_factor = 200.0f;  // Tunable: smaller = tighter curves, larger = gentler curves
+    float radius = curvature_factor / fabs(heading_error);
+    
+    // Clamp radius to reasonable bounds
+    if (radius < 50.0f) radius = 50.0f;      // Minimum radius for stability
+    if (radius > 1e6f) radius = 1e6f;        // Maximum radius (nearly straight)
+    
+    // Apply correct sign based on turn direction
+    if (heading_error < 0) {
+        radius = -radius;  // Negative radius = turn right/clockwise
+    }
+    
+    // Continuously update movement with current radius
+    kinematics.move(robotSpeed, radius);
 }
 
 // Step 4: Check if target reached (only in TARGET mode)
@@ -148,6 +308,11 @@ void PointAndShoot::stepCheckTargetReached(const Pose& current_pose) {
 void PointAndShoot::stepStartRotateAtTarget(const Pose& current_pose) {
     float angle_error = target_pose.angle - current_pose.angle;
     angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    if (fabs(angle_error) < heading_tolerance) {
+        state = PAS_STOP;
+        return;
+    }
     
     // Choose rotation direction based on shortest angular distance
     if (angle_error > 0) {

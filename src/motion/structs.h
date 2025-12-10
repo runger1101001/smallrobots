@@ -21,6 +21,11 @@ namespace SmallRobots {
         float angle=0;
     } Pose;
 
+    typedef struct Move {
+        float velocity = 0; //mm/s
+        float radius = std::numeric_limits<float>::infinity(); //mm, inf = straight line
+    } Move;
+
     typedef struct Circle {
         float x = 0;
         float y = 0;

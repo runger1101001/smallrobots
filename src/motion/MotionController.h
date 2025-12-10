@@ -42,6 +42,8 @@ namespace SmallRobots {
                                         float smoothing_factor = 0.25f, 
                                         float significant_heading_change_rad = 0.15f);
             void setTargetPointAndShoot(const Pose& target, float speed = -1.0f, AngleUnit angleUnit=AngleUnit::RADIANS);
+            void setCurvatureFactorPnS(float factor);
+
             void setTargetDubinsPath(const Pose& target, float speed = -1.0f, AngleUnit angleUnit=AngleUnit::RADIANS);
 
             void stop();
@@ -61,6 +63,13 @@ namespace SmallRobots {
                 // point_and_shoot.setRobotVelocity(max_vel_mm_s);
             } //TODO change
 
+            void saveLastMove(Move move){
+                lastMove = move;
+            }
+            Move getLastMove(){
+                return lastMove;
+            }
+
 
             DifferentialKinematics& kinematics;
             Odometry& odometryCtrl;
@@ -70,6 +79,7 @@ namespace SmallRobots {
 
             PointAndShoot point_and_shoot;
             DubinController dubin_controller;
+            Move lastMove = Move();
 
     };
 

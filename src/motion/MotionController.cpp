@@ -138,6 +138,10 @@ namespace SmallRobots {
         point_and_shoot.setTarget(target_radians, curPose, speed);
         currentMode = POINT_AND_SHOOT;
     }
+    void MotionController::setCurvatureFactorPnS(float factor) {
+        point_and_shoot.setCurvatureFactor(factor);
+    }
+    
     void MotionController::setTargetDubinsPath(const Pose& target, float speed, AngleUnit angleUnit){
         enableMotors();
         dubin_controller.setRobotVelocity(speed);

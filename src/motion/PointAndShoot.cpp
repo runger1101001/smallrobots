@@ -126,50 +126,6 @@ void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed,
     // If already in smooth movement, just update desired_heading (will be used in next run() call)
 }
 
-// Update desired heading while moving (smoother continuous updates)
-// void PointAndShoot::updateDesiredHeading(float vx, float vy, float significant_heading_change_rad) {
-//     float new_heading = atan2(vy, vx);
-//     float heading_diff = new_heading - desired_heading;
-//     heading_diff = atan2(sin(heading_diff), cos(heading_diff));
-    
-//     // Only restart if change is significant
-//     if (fabs(heading_diff) > significant_heading_change_rad) {
-//         desired_heading = new_heading;
-//         state = PAS_START_ROTATING;
-//     } else {
-//         // Smoothly update heading without restarting
-//         desired_heading = new_heading;
-//     }
-// }
-
-// Smooth heading update with low-pass filtering - BEST FOR LINE FOLLOWING
-void PointAndShoot::updateDesiredHeadingSmoothed(float vx, float vy, float smoothing_factor, float significant_heading_change_rad) {
-    float new_heading = atan2(vy, vx);
-    
-    // Low-pass filter: blend new heading with current smoothed heading
-    // smoothing_factor = 0.0 -> no change (fully smoothed)
-    // smoothing_factor = 1.0 -> instant update (no filtering)
-    float heading_diff = new_heading - smoothed_desired_heading;
-    // Normalize to [-π, π]
-    heading_diff = atan2(sin(heading_diff), cos(heading_diff));
-    
-    smoothed_desired_heading = smoothed_desired_heading + heading_diff * smoothing_factor;
-    
-    // Normalize smoothed heading to [-π, π]
-    smoothed_desired_heading = atan2(sin(smoothed_desired_heading), cos(smoothed_desired_heading));
-    
-    // Only restart movement if smoothed heading has changed significantly
-    float actual_heading_diff = smoothed_desired_heading - desired_heading;
-    actual_heading_diff = atan2(sin(actual_heading_diff), cos(actual_heading_diff));
-    
-    if (fabs(actual_heading_diff) > significant_heading_change_rad) {
-        desired_heading = smoothed_desired_heading;
-        state = PAS_START_ROTATING;
-    } else {
-        // Small adjustment - update desired heading gradually without restarting
-        desired_heading = smoothed_desired_heading;
-    }
-}
 
 // TARGET Mode: Set target pose
 void PointAndShoot::setTarget(const Pose& target, const Pose& current_pose, float speed) {

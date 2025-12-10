@@ -35,14 +35,11 @@ public:
     
     // SMOOTHED_LINE_FOLLOWING Mode
     // Set desired velocity with smooth heading updates (call when receiving new server data)
-    void setDesiredVelocitySmoothed(float vx, float vy, float speed = -1.0f, 
+    void setDesiredVelocitySmoothed(float vx, float vy, float speed = -1.0f,
                                     float smoothing_factor = 0.25f, 
                                     float significant_heading_change_rad = 0.15f);
     
-    // Update desired heading while moving (smoother than setDesiredVelocity)
-    // Only restarts if heading change exceeds significant_heading_change_rad
-    void updateDesiredHeading(float vx, float vy, float significant_heading_change_rad = 0.1f);
-    
+    // NOT USED CURRENTLY    
     // Smooth heading update with low-pass filtering (best for line following)
     // Gradually blends new heading with current heading to avoid jerky changes
     void updateDesiredHeadingSmoothed(float vx, float vy, float smoothing_factor = 0.3f, float significant_heading_change_rad = 0.2f);
@@ -55,6 +52,9 @@ public:
     
     // Configure parameters
     void setHeadingTolerance(float tolerance_rad);
+    void setCurvatureFactor(float factor=200.0f){ // Tunable: smaller = tighter curves, larger = gentler curves
+        curvature_factor = factor;
+    }
 
     void setRobotVelocity(float _vRobot);
     void setRobotVelocityAndActivate(float _vRobot);
@@ -89,6 +89,8 @@ private:
     float smoothed_desired_heading = 0.0f;  // Filtered heading value
     float smoothing_factor = 0.25f;         // Low-pass filter factor for smooth line following
     float significant_heading_change_rad = 0.15f;  // Threshold before restarting rotation
+    float curvature_factor = 200.0f;  // Tunable: smaller = tighter curves, larger = gentler curves
+
 
     // Private step functions
     void stepStartRotating(const Pose& current_pose);

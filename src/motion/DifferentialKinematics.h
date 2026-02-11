@@ -74,7 +74,8 @@ namespace SmallRobots {
             void setCurRobotRadius(float _curRobotRadius);
             float getCurRobotRadius();
 
-            float globalCoordinateSystemOffsetAngle = M_PI/2.0; //TODO should be set by config?
+            float globalCoordinateSystemOffsetAngle = M_PI/2.0; // Robot forward = +Y when heading = 0
+            //TODO should be set by config?
 
         private:
             Pose pose;

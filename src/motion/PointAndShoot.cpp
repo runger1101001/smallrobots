@@ -62,6 +62,12 @@ void PointAndShoot::run(const Pose& current_pose) {
 
 // INFINITE Mode: Set desired velocity
 void PointAndShoot::setDesiredVelocity(float vx, float vy, float speed) {
+     // Handle zero velocity as stop command
+    if (fabs(vx) < 1e-6f && fabs(vy) < 1e-6f) {
+        stop();
+        return;
+    }
+    
     mode = PointAndShootMode::INFINITE;
     float new_heading = atan2(vy, vx);
     
@@ -76,13 +82,17 @@ void PointAndShoot::setDesiredVelocity(float vx, float vy, float speed) {
     } else if (state == PAS_IDLE || state == PAS_STOP) {
         // Currently idle/stopped - start moving in current direction
         desired_heading = new_heading;
-        state = PAS_START_ROTATING;
+        state = PAS_START_MOVING;
     }
-    // else: small heading change while already moving - ignore to avoid jerkiness
+    // else: small heading change while already moving - just update speed below
     
     // Update speed if provided
     if (speed >= 0.0f) {
         robotSpeed = speed;
+        // If already moving, update speed immediately
+        if (state == PAS_MOVING) {
+            kinematics.move(robotSpeed, 1e6f);
+        }
     }
 }
 
@@ -93,6 +103,13 @@ void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed,
                                                float smoothing_factor, 
                                                float significant_heading_change_rad
                                                ) {
+
+                                                    // Handle zero velocity as stop command
+    if (fabs(vx) < 1e-6f && fabs(vy) < 1e-6f) {
+        stop();
+        return;
+    }
+    
     mode = PointAndShootMode::SMOOTHED_LINE_FOLLOWING;
     
     // Store smoothing parameters for use in run()
@@ -157,7 +174,12 @@ void PointAndShoot::stepStartRotating(const Pose& current_pose) {
     angle_error = atan2(sin(angle_error), cos(angle_error));
     
     if (fabs(angle_error) < heading_tolerance) {
-        state = PAS_START_MOVING;
+        // Already facing correct direction - start moving immediately
+        if (mode == PointAndShootMode::TARGET) {
+            stepStartMovingTarget(current_pose);
+        } else if (mode == PointAndShootMode::INFINITE) {
+            stepStartMovingInfiniteStraight();
+        }
         return;
     }
     

@@ -107,9 +107,20 @@ namespace SmallRobots {
         float deltaSR = vR*deltaT/1000000.0f;
         float deltaSL = vL*deltaT/1000000.0f;
 
+        // Pose deltaPose;
+        // deltaPose.x = (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;
+        // deltaPose.y = (deltaSR+deltaSL)/2.0  * sin( lastPose.angle  ) ;
+        // deltaPose.angle = (deltaSR-deltaSL)/(2*half_wheel_base);
+
+                // Apply global coordinate system offset:
+        // Robot forward (wheels parallel to X) means forward = +Y direction
+        // So when heading = 0, robot moves along +Y, not +X
+        // offset = PI/2 rotates from robot frame to global frame
+        float globalAngle = lastPose.angle + globalCoordinateSystemOffsetAngle;
+
         Pose deltaPose;
-        deltaPose.x = (deltaSR+deltaSL)/2.0  * cos( lastPose.angle ) ;
-        deltaPose.y = (deltaSR+deltaSL)/2.0  * sin( lastPose.angle  ) ;
+        deltaPose.x = (deltaSR+deltaSL)/2.0 * cos(globalAngle);
+        deltaPose.y = (deltaSR+deltaSL)/2.0 * sin(globalAngle);
         deltaPose.angle = (deltaSR-deltaSL)/(2*half_wheel_base);
     
         return deltaPose;

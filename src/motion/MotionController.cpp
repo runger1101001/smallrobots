@@ -120,6 +120,7 @@ namespace SmallRobots {
         enableMotors();
         point_and_shoot.setDesiredVelocitySmoothed(vx, vy, speed, smoothing_factor, significant_heading_change_rad);
         currentMode = POINT_AND_SHOOT;
+        
     }
 
     void MotionController::setDesiredVelocityPointAndShoot(float vx, float vy, float speed) {

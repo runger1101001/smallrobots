@@ -4,7 +4,7 @@
 namespace SmallRobots {
 
 PointAndShoot::PointAndShoot(DifferentialKinematics& _kinematics) 
-    : kinematics(_kinematics), state(PAS_ROTATING)
+    : kinematics(_kinematics), state(PAS_IDLE), mode(PointAndShootMode::INFINITE)
 {
 }
 
@@ -91,27 +91,33 @@ void PointAndShoot::setDesiredVelocity(float vx, float vy, float speed) {
 // This mode curves the robot toward the desired heading while moving
 void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed, 
                                                float smoothing_factor, 
-                                               float significant_heading_change_rad) {
+                                               float significant_heading_change_rad
+                                               ) {
     mode = PointAndShootMode::SMOOTHED_LINE_FOLLOWING;
     
     // Store smoothing parameters for use in run()
     this->smoothing_factor = smoothing_factor;
     this->significant_heading_change_rad = significant_heading_change_rad;
-    
     // Update the new heading target
     float new_heading = atan2(vy, vx);
     
-    // Low-pass filter: blend new heading with current smoothed heading
+     // Check if this is a significant heading change
     float heading_diff = new_heading - smoothed_desired_heading;
     heading_diff = atan2(sin(heading_diff), cos(heading_diff));
     
-    smoothed_desired_heading = smoothed_desired_heading + heading_diff * smoothing_factor;
+    // Only apply smoothing if heading change is significant
+    if (fabs(heading_diff) > significant_heading_change_rad) {
+        // Low-pass filter: blend new heading with current smoothed heading
+        smoothed_desired_heading = smoothed_desired_heading + heading_diff * smoothing_factor;
+    }
+    // else: ignore small heading fluctuations to avoid jerkiness
     
     // Normalize smoothed heading to [-π, π]
     smoothed_desired_heading = atan2(sin(smoothed_desired_heading), cos(smoothed_desired_heading));
     
     // Update desired heading to the smoothed value
     desired_heading = smoothed_desired_heading;
+    
     
     // Update speed if provided
     if (speed >= 0.0f) {
@@ -230,12 +236,13 @@ void PointAndShoot::stepMovingSmoothCurve(const Pose& current_pose) {
     // The radius is calculated such that the robot curves toward the target heading
     
     // Using simple proportional control: radius based on heading error
+    // curvature_factor is a tunable parameter through setCurvatureFactor()
     // heading_error ranges from -π to π, we want positive radius
-    float curvature_factor = 200.0f;  // Tunable: smaller = tighter curves, larger = gentler curves
+    // Tunable: smaller = tighter curves, larger = gentler curves
     float radius = curvature_factor / fabs(heading_error);
     
     // Clamp radius to reasonable bounds
-    if (radius < 50.0f) radius = 50.0f;      // Minimum radius for stability
+    if (radius < 0.0f) radius = 0.0f;      // Minimum radius for stability
     if (radius > 1e6f) radius = 1e6f;        // Maximum radius (nearly straight)
     
     // Apply correct sign based on turn direction

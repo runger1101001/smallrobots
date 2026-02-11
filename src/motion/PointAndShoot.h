@@ -36,13 +36,13 @@ public:
     // SMOOTHED_LINE_FOLLOWING Mode
     // Set desired velocity with smooth heading updates (call when receiving new server data)
     void setDesiredVelocitySmoothed(float vx, float vy, float speed = -1.0f,
-                                    float smoothing_factor = 0.25f, 
-                                    float significant_heading_change_rad = 0.15f);
+                                    float smoothing_factor = 0.5f, 
+                                    float significant_heading_change_rad = 0.02f);
     
     // NOT USED CURRENTLY    
     // Smooth heading update with low-pass filtering (best for line following)
     // Gradually blends new heading with current heading to avoid jerky changes
-    void updateDesiredHeadingSmoothed(float vx, float vy, float smoothing_factor = 0.3f, float significant_heading_change_rad = 0.2f);
+    void updateDesiredHeadingSmoothed(float vx, float vy, float smoothing_factor = 0.5f, float significant_heading_change_rad = 0.02f);
     
     // TARGET Mode
     void setTarget(const Pose& target, const Pose& current_pose, float speed = -1.0f);
@@ -52,7 +52,7 @@ public:
     
     // Configure parameters
     void setHeadingTolerance(float tolerance_rad);
-    void setCurvatureFactor(float factor=200.0f){ // Tunable: smaller = tighter curves, larger = gentler curves
+    void setCurvatureFactor(float factor=50.0f){ // Tunable: smaller = tighter curves, larger = gentler curves
         curvature_factor = factor;
     }
 

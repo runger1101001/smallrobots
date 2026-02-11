@@ -39,8 +39,8 @@ namespace SmallRobots {
 
             void setDesiredVelocityPointAndShoot(float vx, float vy, float speed = -1.0f);
             void setDesiredVelocitySmoothedPointAndShoot(float vx, float vy, float speed = -1.0f, 
-                                        float smoothing_factor = 0.25f, 
-                                        float significant_heading_change_rad = 0.15f);
+                                        float smoothing_factor = 0.5f, 
+                                        float significant_heading_change_rad = 0.02f);
             void setTargetPointAndShoot(const Pose& target, float speed = -1.0f, AngleUnit angleUnit=AngleUnit::RADIANS);
             void setCurvatureFactorPnS(float factor);
 

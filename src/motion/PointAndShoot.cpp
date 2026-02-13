@@ -39,7 +39,11 @@ void PointAndShoot::run(const Pose& current_pose) {
             
         case PAS_SMOOTH_MOVING:
             // Continuously curve toward desired heading while moving
-            stepMovingSmoothCurve(current_pose);
+            if (mode == PointAndShootMode::VELOCITY_TRACKING) {
+                stepVelocityTracking(current_pose);
+            } else {
+                stepMovingSmoothCurve(current_pose);
+            }
             break;
             
         case PAS_START_ROTATE_AT_TARGET:
@@ -175,7 +179,10 @@ void PointAndShoot::stepStartRotating(const Pose& current_pose) {
     
     if (fabs(angle_error) < heading_tolerance) {
         // Already facing correct direction - start moving immediately
-        if (mode == PointAndShootMode::TARGET) {
+        if (mode == PointAndShootMode::VELOCITY_TRACKING) {
+            kinematics.move(robotSpeed, 1e6f);
+            state = PAS_SMOOTH_MOVING;
+        } else if (mode == PointAndShootMode::TARGET) {
             stepStartMovingTarget(current_pose);
         } else if (mode == PointAndShootMode::INFINITE) {
             stepStartMovingInfiniteStraight();
@@ -204,13 +211,19 @@ void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
     
     // Check if we've arrived, considering rotation direction
     if (fabs(angle_error) < heading_tolerance) {
-        state = PAS_START_MOVING;
+        if (mode == PointAndShootMode::VELOCITY_TRACKING) {
+            kinematics.move(robotSpeed, 1e6f);
+            state = PAS_SMOOTH_MOVING;  // Go to tracking, not PAS_START_MOVING
+        } else {
+            state = PAS_START_MOVING;
+        }
+        return;
     }
     // Verify we're still rotating in the correct direction
     else if ((rotationDirection > 0 && angle_error < 0) || 
              (rotationDirection < 0 && angle_error > 0)) {
-        // Overshot the target, transition to next state
-        state = PAS_START_MOVING;
+        // Overshot or heading changed during rotation — restart
+        state = PAS_START_ROTATING;
     }
 }
 
@@ -327,6 +340,70 @@ void PointAndShoot::stepRotateAtTarget(const Pose& current_pose) {
         // Overshot the target, transition to stop
         state = PAS_STOP;
     }
+}
+
+
+// VELOCITY_TRACKING Mode: Direct velocity tracking from external controller
+void PointAndShoot::setTrackedVelocity(float vx, float vy, float speed,
+                                        float max_angular_rate) {
+    // Handle zero velocity as stop command
+    if (fabs(vx) < 1e-6f && fabs(vy) < 1e-6f) {
+        stop();
+        return;
+    }
+    
+    mode = PointAndShootMode::VELOCITY_TRACKING;
+    this->max_angular_rate = max_angular_rate;
+    tracked_vx = vx;
+    tracked_vy = vy;
+    desired_heading = atan2(vy, vx);
+    
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+    
+    // If idle/stopped, evaluate heading before moving
+    if (state == PAS_IDLE || state == PAS_STOP) {
+        state = PAS_START_ROTATING;  // stepStartRotating will decide: rotate or move
+    }
+    // If already moving/tracking, just update desired_heading
+    // stepVelocityTracking will handle it each cycle
+}
+
+// VELOCITY_TRACKING: Smoothly curve toward desired heading while moving
+// For large heading errors, transitions to rotate-in-place
+void PointAndShoot::stepVelocityTracking(const Pose& current_pose) {
+    float angle_error = desired_heading - current_pose.angle;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    float abs_error = fabs(angle_error);
+    
+    // Large heading error: stop and rotate in place
+    if (abs_error > rotate_in_place_threshold) {
+        state = PAS_START_ROTATING;
+        return;
+    }
+    
+    // Small heading error: drive straight
+    if (abs_error < 0.01f) {
+        kinematics.move(robotSpeed, 1e6f);
+        return;
+    }
+    
+    // Medium heading error: curve toward heading
+    // Clamp angular rate for smooth motion
+    float clamped_error = fmax(-max_angular_rate, fmin(max_angular_rate, angle_error));
+    
+    // Proportional curvature: radius = speed / angular_rate
+    float radius = robotSpeed / clamped_error;
+    
+    // Clamp minimum radius to avoid spinning
+    float min_radius = 15.0f;  // mm — roughly half wheel base
+    if (fabs(radius) < min_radius) {
+        radius = (radius > 0) ? min_radius : -min_radius;
+    }
+    
+    kinematics.move(robotSpeed, radius);
 }
 
 

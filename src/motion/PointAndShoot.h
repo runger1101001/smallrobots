@@ -21,7 +21,8 @@ enum PointAndShootState {
 enum class PointAndShootMode {
     INFINITE,  // Rotate to heading, move forever
     TARGET,     // Rotate to heading, move to target pose, rotate to target angle
-    SMOOTHED_LINE_FOLLOWING // Continuously update heading with smoothing while moving
+    SMOOTHED_LINE_FOLLOWING, // Continuously update heading with smoothing while moving
+    VELOCITY_TRACKING       // Direct velocity tracking from external controller (camera/simulation)
 };
 
 class PointAndShoot {
@@ -39,6 +40,17 @@ public:
                                     float smoothing_factor = 0.5f, 
                                     float significant_heading_change_rad = 0.02f);
     
+    // VELOCITY_TRACKING Mode
+    // Direct velocity tracking for external controller (camera/simulation)
+    // Smoothly curves toward desired heading while moving - no stop-rotate-move cycle
+    // For large heading changes (> rotate_in_place_threshold), rotates in place first
+    void setTrackedVelocity(float vx, float vy, float speed = -1.0f,
+                            float max_angular_rate = 3.0f);
+    
+    // Set the heading error threshold above which the robot rotates in place
+    // instead of curving (default: 90 degrees)
+    void setRotateInPlaceThreshold(float threshold_rad) { rotate_in_place_threshold = threshold_rad; }
+
     // NOT USED CURRENTLY    
     // Smooth heading update with low-pass filtering (best for line following)
     // Gradually blends new heading with current heading to avoid jerky changes
@@ -91,12 +103,18 @@ private:
     float significant_heading_change_rad = 0.15f;  // Threshold before restarting rotation
     float curvature_factor = 200.0f;  // Tunable: smaller = tighter curves, larger = gentler curves
 
+    // Velocity tracking state
+    float tracked_vx = 0.0f;
+    float tracked_vy = 0.0f;
+    float max_angular_rate = 3.0f;       // rad/s - limits how fast robot can turn
+    float rotate_in_place_threshold = M_PI / 2.0f;  // 90° - rotate in place above this
 
     // Private step functions
     void stepStartRotating(const Pose& current_pose);
     void stepRotateToHeading(const Pose& current_pose);
     void stepStartMovingTarget(const Pose& current_pose);
     void stepMovingSmoothCurve(const Pose& current_pose);  // SMOOTHED_LINE_FOLLOWING helper
+    void stepVelocityTracking(const Pose& current_pose);   // VELOCITY_TRACKING helper
     void stepStartMovingInfiniteStraight();
     void stepCheckTargetReached(const Pose& current_pose);
     void stepStartRotateAtTarget(const Pose& current_pose);

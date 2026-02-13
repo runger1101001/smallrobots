@@ -41,8 +41,11 @@ namespace SmallRobots {
             void setDesiredVelocitySmoothedPointAndShoot(float vx, float vy, float speed = -1.0f, 
                                         float smoothing_factor = 0.5f, 
                                         float significant_heading_change_rad = 0.02f);
+            void setTrackedVelocityPointAndShoot(float vx, float vy, float speed = -1.0f,
+                                        float max_angular_rate = 3.0f);
             void setTargetPointAndShoot(const Pose& target, float speed = -1.0f, AngleUnit angleUnit=AngleUnit::RADIANS);
             void setCurvatureFactorPnS(float factor);
+            void setRotateInPlaceThresholdPnS(float threshold_rad);
 
             void setTargetDubinsPath(const Pose& target, float speed = -1.0f, AngleUnit angleUnit=AngleUnit::RADIANS);
 

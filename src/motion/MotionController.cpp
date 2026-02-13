@@ -123,6 +123,13 @@ namespace SmallRobots {
         
     }
 
+    void MotionController::setTrackedVelocityPointAndShoot(float vx, float vy, float speed,
+                                                           float max_angular_rate) {
+        enableMotors();
+        point_and_shoot.setTrackedVelocity(vx, vy, speed, max_angular_rate);
+        currentMode = POINT_AND_SHOOT;
+    }
+
     void MotionController::setDesiredVelocityPointAndShoot(float vx, float vy, float speed) {
         enableMotors();
         point_and_shoot.setDesiredVelocity(vx, vy, speed);
@@ -141,6 +148,9 @@ namespace SmallRobots {
     }
     void MotionController::setCurvatureFactorPnS(float factor) {
         point_and_shoot.setCurvatureFactor(factor);
+    }
+    void MotionController::setRotateInPlaceThresholdPnS(float threshold_rad) {
+        point_and_shoot.setRotateInPlaceThreshold(threshold_rad);
     }
     
     void MotionController::setTargetDubinsPath(const Pose& target, float speed, AngleUnit angleUnit){

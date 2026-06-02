@@ -76,6 +76,7 @@ namespace SmallRobots {
             if (onchange_f && value != f)
                 onchange_f(value);
             f = value;
+            if (onAnyParamChanged) onAnyParamChanged(name);
             return *this;
         };
 
@@ -85,6 +86,7 @@ namespace SmallRobots {
             if (onchange_i && value != i)
                 onchange_i(value);
             i = value;
+            if (onAnyParamChanged) onAnyParamChanged(name);
             return *this;
         };
 
@@ -97,6 +99,7 @@ namespace SmallRobots {
             *s = value;
             if (onchange_s && changed)
                 onchange_s(s);
+            if (onAnyParamChanged) onAnyParamChanged(name);
             return *this;
         };
 
@@ -106,6 +109,7 @@ namespace SmallRobots {
             if (onchange_b && value != b)
                 onchange_b(value);
             b = value;
+            if (onAnyParamChanged) onAnyParamChanged(name);
             return *this;
         };
 
@@ -136,6 +140,7 @@ namespace SmallRobots {
         };
 
         inline static bool debug = false;
+        inline static std::function<void(const char*)> onAnyParamChanged = nullptr;
     private:
 
         SmallRobotParameter(const char* name, SmallRobotParameterType type = SmallRobotParameterType::T_UNKNOWN) {
@@ -156,18 +161,23 @@ namespace SmallRobots {
 
         SmallRobotTags& operator+=(const char* tag) {
             tags.insert(String(tag));
+            if (onTagsChanged) onTagsChanged();
             return *this;
         };
 
         SmallRobotTags& operator+=(String& tag) {
             tags.insert(tag);
+            if (onTagsChanged) onTagsChanged();
             return *this;
         };
 
         SmallRobotTags& operator-=(const char* tag) {
             tags.erase(String(tag));
+            if (onTagsChanged) onTagsChanged();
             return *this;
         };
+
+        inline static std::function<void()> onTagsChanged = nullptr;
 
         bool operator[](String tag) {
             return tags.find(tag) != tags.end();

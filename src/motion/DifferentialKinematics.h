@@ -55,6 +55,14 @@ namespace SmallRobots {
             virtual void stop()=0;
             virtual void start()=0;
 
+            /**
+             * Send corrected wheel velocities directly to the motor driver,
+             * bypassing the dead reckoning set-velocity store.
+             * Override in concrete implementations. Default is a no-op so
+             * existing implementations remain backward compatible.
+             */
+            virtual void applyVelocityBias(float left, float right) {}
+
             virtual MotorsPosition getMotorsPosition()=0;
             virtual MotorsVelocity getMotorsVelocity()=0;
             virtual MotorsVelocity getMotorsSetVelocity()=0;

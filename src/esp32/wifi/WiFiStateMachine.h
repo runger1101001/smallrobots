@@ -25,6 +25,8 @@ namespace SmallRobots {
 #define WIFI_RECONNECT_RETRIES 10
 
 #define UDP_PORT 48048
+#define UDP_MULTICAST_IP IPAddress(239, 255, 0, 1)
+
 #define UDP_PORT_SEND 48049
 
     class WiFiStateMachine {
@@ -121,6 +123,7 @@ namespace SmallRobots {
             if (ota && machine==connected) ArduinoOTA.handle();
         };
 
+        AsyncUDP udp; //global to send OSC Messages
 
         String hostname = (const char*)nullptr;
         String ssid = (const char*)nullptr;
@@ -129,11 +132,10 @@ namespace SmallRobots {
         int send_port = UDP_PORT_SEND;
         bool ota = true;
         uint8_t retries = 0;
-        IPAddress multicast_ip = IPAddress(239, 255, 0, 1);
+        IPAddress multicast_ip = UDP_MULTICAST_IP;
         EventBus<String>* event_bus;
 
     protected:
-        AsyncUDP udp; //global to send OSC Messages
         bool first_connection = false;
 
 

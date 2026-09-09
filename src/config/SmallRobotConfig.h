@@ -28,29 +28,33 @@ namespace SmallRobots {
             this->name = name;
             this->type = SmallRobotParameterType::T_FLOAT;
             f = value;
-            this->onchange_f = onchange;
+            new (&this->onchange_f) std::function<void(float)>(std::move(onchange));
         };
         SmallRobotParameter(const char* name, int value, std::function<void(int)> onchange = nullptr) {
             this->name = name;
             this->type = SmallRobotParameterType::T_INT;
             i = value;
-            this->onchange_i = onchange;
+            new (&this->onchange_i) std::function<void(int)>(std::move(onchange));
         };
         SmallRobotParameter(const char* name, String value, std::function<void(String*)> onchange = nullptr) {
             this->name = name;
             this->type = SmallRobotParameterType::T_STRING;
             s = new String(value);
-            this->onchange_s = onchange;
+            new (&this->onchange_s) std::function<void(String*)>(std::move(onchange));
         };
         SmallRobotParameter(const char* name, bool value, std::function<void(bool)> onchange = nullptr) {
             this->name = name;
             this->type = SmallRobotParameterType::T_BOOL;
             b = value;
-            this->onchange_b = onchange;
+            new (&this->onchange_b) std::function<void(bool)>(std::move(onchange));
         };
         ~SmallRobotParameter() {
-            if (type==SmallRobotParameterType::T_STRING && s!=nullptr) {
-                delete s;
+            switch (type) {
+                case T_FLOAT:  onchange_f.~function(); break;
+                case T_INT:    onchange_i.~function(); break;
+                case T_BOOL:   onchange_b.~function(); break;
+                case T_STRING: onchange_s.~function(); if (s != nullptr) delete s; break;
+                default: break;
             }
         };
 
@@ -177,6 +181,29 @@ namespace SmallRobots {
             return *this;
         };
 
+        // adds a tag that survives clear() (e.g. #all, #<species>, #<mac address>)
+        SmallRobotTags& keep(String tag) {
+            permanent.insert(tag);
+            tags.insert(tag);
+            if (onTagsChanged) onTagsChanged();
+            return *this;
+        };
+
+        bool isPermanent(String tag) {
+            return permanent.find(tag) != permanent.end();
+        };
+
+        // removes all tags except the permanent ones
+        void clear() {
+            for (auto it = tags.begin(); it != tags.end(); ) {
+                if (permanent.find(*it) != permanent.end())
+                    ++it;
+                else
+                    it = tags.erase(it);
+            }
+            if (onTagsChanged) onTagsChanged();
+        };
+
         inline static std::function<void()> onTagsChanged = nullptr;
 
         bool operator[](String tag) {
@@ -191,6 +218,7 @@ namespace SmallRobots {
 
     private:
         std::set<String> tags;
+        std::set<String> permanent;
 
     };
 

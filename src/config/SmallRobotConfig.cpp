@@ -12,9 +12,9 @@ namespace SmallRobots {
 
     SmallRobotConfig::SmallRobotConfig() {
         // configure permanent tags for this robot
-        tags += "#all";
+        tags.keep("#all");
         #if defined(SMALLROBOT_SPECIES)
-        tags += (String("#")+SMALLROBOT_SPECIES);    
+        tags.keep(String("#")+SMALLROBOT_SPECIES);
         #endif    
     };
 

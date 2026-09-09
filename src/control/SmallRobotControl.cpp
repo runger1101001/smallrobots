@@ -20,13 +20,13 @@ namespace SmallRobots {
         addCommand("untag", [](OSCMessage& tag){
             char buff[32];
             tag.getString(0, buff, 32);
-            if (String("#all")==buff)
+            if (robot_config.tags.isPermanent(buff))
                 return;
-            #if defined(SMALLROBOT_SPECIES)
-            if ((String("#")+SMALLROBOT_SPECIES)==buff)
-                return;
-            #endif
             robot_config.tags -= buff;
+        });
+
+        addCommand("untagAll", [](OSCMessage& tag){
+            robot_config.tags.clear();
         });
     };
 

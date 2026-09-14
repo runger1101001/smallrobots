@@ -193,13 +193,37 @@ namespace SmallRobots {
             return permanent.find(tag) != permanent.end();
         };
 
+        // Transient tags are derived from live data and change often, so these deliberately do
+        // NOT fire onTagsChanged - which is typically wired to persist the tag list to flash.
+        // A robot tagging itself from its position in a swarm sort would otherwise write flash
+        // every few hundred milliseconds. Code that persists tags must skip them, see
+        // isTransient(). They are otherwise ordinary tags: any number can be held at once, and
+        // they are matched by operator[] and listed by forEach() like the rest.
+        SmallRobotTags& addTransient(const char* tag) {
+            transient_tags.insert(String(tag));
+            tags.insert(String(tag));
+            return *this;
+        };
+
+        SmallRobotTags& removeTransient(const char* tag) {
+            transient_tags.erase(String(tag));
+            tags.erase(String(tag));
+            return *this;
+        };
+
+        bool isTransient(String tag) {
+            return transient_tags.find(tag) != transient_tags.end();
+        };
+
         // removes all tags except the permanent ones
         void clear() {
             for (auto it = tags.begin(); it != tags.end(); ) {
                 if (permanent.find(*it) != permanent.end())
                     ++it;
-                else
+                else {
+                    transient_tags.erase(*it);
                     it = tags.erase(it);
+                }
             }
             if (onTagsChanged) onTagsChanged();
         };
@@ -219,6 +243,7 @@ namespace SmallRobots {
     private:
         std::set<String> tags;
         std::set<String> permanent;
+        std::set<String> transient_tags;  // subset of tags that must not be persisted
 
     };
 

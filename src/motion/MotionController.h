@@ -38,6 +38,10 @@ namespace SmallRobots {
             void run();
 
             void setDesiredVelocityPointAndShoot(float vx, float vy, float speed = -1.0f);
+            void setHeadingPointAndShoot(float angle_deg, float speed = -1.0f, int8_t turnPref = 0);
+            void setMoveDistancePointAndShoot(float distance_mm, float speed = -1.0f);
+            void rotateByDegreesPointAndShoot(float angle_deg, float speed = -1.0f);
+            void moveByPointAndShoot(float distance_mm, float speed = -1.0f);
             void setDesiredVelocitySmoothedPointAndShoot(float vx, float vy, float speed = -1.0f, 
                                         float smoothing_factor = 0.5f, 
                                         float significant_heading_change_rad = 0.02f);

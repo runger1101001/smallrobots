@@ -19,6 +19,8 @@ namespace SmallRobots {
             void setCurPose(float x, float y, float angle, AngleUnit angleUnit=AngleUnit::RADIANS);
             Pose getDeltaPose() { return deltaPose; }
             unsigned long getDeltaT() { return deltaT; }
+            Pose getRawOdometryData() { return rawOdometryPose; } // Raw unfiltered odometry data
+            float getRawOdometryAngle() { return rawOdometryPose.angle; } // Raw angle from local odometry
 
         protected:
             DifferentialKinematics& kinematics;
@@ -28,6 +30,7 @@ namespace SmallRobots {
             //angle = 0 heading in y direction
             Pose curPose = Pose(); 
             Pose deltaPose = Pose();
+            Pose rawOdometryPose = Pose(); // Raw encoder/IMU data without external tracking influence
             
             int lastTime=0, deltaT=0; //delat T, read in micros
             uint32_t update_ms = 10;

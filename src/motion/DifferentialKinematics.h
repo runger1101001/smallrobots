@@ -12,6 +12,7 @@
 #define MINRADIUS 50.0 //kinematics do not work when radius is bigger than half_wheel_base... why? TODO SET AUTOMATICALLY FROM ZOOIDDRIVE
 
 #define DEFAULT_ROBOT_SPEED 100 //mm/s
+#define MIN_ROTATION_SPEED 50 //mm/s
 
 namespace SmallRobots {
 

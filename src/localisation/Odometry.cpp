@@ -38,7 +38,11 @@ namespace SmallRobots {
         curPose.x += deltaPose.x;
         curPose.y += deltaPose.y;
         curPose.angle += deltaPose.angle;
-
+        
+        // Also update raw odometry data (independent of external tracking)
+        rawOdometryPose.x += deltaPose.x;
+        rawOdometryPose.y += deltaPose.y;
+        rawOdometryPose.angle += deltaPose.angle;
     };
 
     void Odometry::resetLastTime(){
@@ -55,15 +59,17 @@ namespace SmallRobots {
         curPose.x = 0;
         curPose.y = 0;
         curPose.angle = 0;
-
+        rawOdometryPose.x = 0;
+        rawOdometryPose.y = 0;
+        rawOdometryPose.angle = 0;
     }; 
     void Odometry::setCurPose(float x, float y, float angle, AngleUnit angleUnit){
         curPose.x = x;
         curPose.y = y;
         if (angleUnit == AngleUnit::DEGREES) {
-            curPose.angle = angle * M_PI / 180.0f;
+            curPose.angle = angle * M_PI / 180.0f - kinematics.globalCoordinateSystemOffsetAngle;
         } else {
-            curPose.angle = angle;
+            curPose.angle = angle - kinematics.globalCoordinateSystemOffsetAngle;
         }
     };
 

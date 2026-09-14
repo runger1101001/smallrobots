@@ -27,11 +27,13 @@ void PointAndShoot::run(const Pose& current_pose) {
                 stepStartMovingTarget(current_pose);
             } else if (mode == PointAndShootMode::INFINITE) {
                 stepStartMovingInfiniteStraight();
+            } else if (mode == PointAndShootMode::DISTANCE) {
+                stepStartMovingDistance(current_pose);
             }
             break;
             
         case PAS_MOVING:
-            if (mode == PointAndShootMode::TARGET) {
+            if (mode == PointAndShootMode::TARGET || mode == PointAndShootMode::DISTANCE) {
                 stepCheckTargetReached(current_pose);
             }
             // INFINITE mode: keep moving, no special logic needed
@@ -54,6 +56,22 @@ void PointAndShoot::run(const Pose& current_pose) {
             stepRotateAtTarget(current_pose);
             break;
             
+        case PAS_START_ODOMETRY_ROTATE:
+            stepStartOdometryRotate(current_pose);
+            break;
+            
+        case PAS_ODOMETRY_ROTATING:
+            stepOdometryRotating(current_pose);
+            break;
+            
+        case PAS_START_ODOMETRY_MOVE:
+            stepStartOdometryMove(current_pose);
+            break;
+            
+        case PAS_ODOMETRY_MOVING:
+            stepOdometryMoving(current_pose);
+            break;
+            
         case PAS_STOP:
             stepStop(current_pose);
             break;
@@ -73,7 +91,7 @@ void PointAndShoot::setDesiredVelocity(float vx, float vy, float speed) {
     }
     
     mode = PointAndShootMode::INFINITE;
-    float new_heading = atan2(vy, vx);
+    float new_heading = atan2(vy, vx) - kinematics.globalCoordinateSystemOffsetAngle;
     
     // Only update state if heading has changed significantly
     float heading_diff = new_heading - desired_heading;
@@ -120,7 +138,7 @@ void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed,
     this->smoothing_factor = smoothing_factor;
     this->significant_heading_change_rad = significant_heading_change_rad;
     // Update the new heading target
-    float new_heading = atan2(vy, vx);
+    float new_heading = atan2(vy, vx) - kinematics.globalCoordinateSystemOffsetAngle;
     
      // Check if this is a significant heading change
     float heading_diff = new_heading - smoothed_desired_heading;
@@ -154,15 +172,44 @@ void PointAndShoot::setDesiredVelocitySmoothed(float vx, float vy, float speed,
 }
 
 
+// Rotate in place to an absolute heading, then stop
+void PointAndShoot::setHeading(float angle_rad, float speed, int8_t turnPref) {
+    mode = PointAndShootMode::TARGET;
+    // Convert from world frame to odometry frame, same as velocity-based methods
+    target_pose.angle = angle_rad - kinematics.globalCoordinateSystemOffsetAngle;
+    turnDirectionPref = turnPref;
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+    state = PAS_START_ROTATE_AT_TARGET;
+}
+
+// DISTANCE Mode: Move straight in current heading for a fixed distance, then stop
+void PointAndShoot::setMoveDistance(float distance_mm, float speed) {
+    // Ignore if already executing — prevents continuous re-triggering from a loop
+    if (mode == PointAndShootMode::DISTANCE &&
+        (state == PAS_START_MOVING || state == PAS_MOVING)) {
+        return;
+    }
+    mode = PointAndShootMode::DISTANCE;
+    moveDirection = (distance_mm >= 0.0f) ? 1.0f : -1.0f;
+    target_distance = fabs(distance_mm);
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+    state = PAS_START_MOVING;
+}
+
 // TARGET Mode: Set target pose
 void PointAndShoot::setTarget(const Pose& target, const Pose& current_pose, float speed) {
     mode = PointAndShootMode::TARGET;
     target_pose = target;
-    
+    target_pose.angle = target.angle - kinematics.globalCoordinateSystemOffsetAngle;
+
     // Calculate heading vector from current pose to target
     float vx = target.x - current_pose.x;
     float vy = target.y - current_pose.y;
-    desired_heading = atan2(vy, vx);
+    desired_heading = atan2(vy, vx) - kinematics.globalCoordinateSystemOffsetAngle;
     
     // Optionally update speed, otherwise keep existing speedValue
     if (speed >= 0.0f) {
@@ -189,41 +236,104 @@ void PointAndShoot::stepStartRotating(const Pose& current_pose) {
         }
         return;
     }
+
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    // Reduce speed proportionally below a threshold angle
+    if (fabs(angle_error) < slow_down_angle) {  // e.g. 0.3 rad
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);  // avoid stalling
+    }
     
+    last_rotation_speed = -1.0f;
     // Choose rotation direction based on shortest angular distance
     if (angle_error > 0) {
         rotationDirection = 1;  // Counter-clockwise
-        kinematics.rotateCCW(robotSpeed);  // Counter-clockwise
+        kinematics.rotateCCW(rotation_speed);  // Counter-clockwise
     } else {
         rotationDirection = -1;  // Clockwise
-        kinematics.rotateCW(robotSpeed);   // Clockwise
+        kinematics.rotateCW(rotation_speed);   // Clockwise
     }
     state = PAS_ROTATING;
 }
 
 
 // Step 2: Check if arrived at target heading
+// void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
+//     float angle_error = desired_heading - current_pose.angle;
+    
+//     // Normalize angle error to [-π, π]
+//     angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+//     // Check if we've arrived, considering rotation direction
+//     if (fabs(angle_error) < heading_tolerance) {
+//         if (mode == PointAndShootMode::VELOCITY_TRACKING) {
+//             kinematics.move(robotSpeed, 1e6f);
+//             state = PAS_SMOOTH_MOVING;  // Go to tracking, not PAS_START_MOVING
+//         } else {
+//             state = PAS_START_MOVING;
+//         }
+//         return;
+//     }
+//     // Verify we're still rotating in the correct direction
+//     else if ((rotationDirection > 0 && angle_error < 0) || 
+//              (rotationDirection < 0 && angle_error > 0)) {
+//         // Overshot or heading changed during rotation — restart
+//         state = PAS_START_ROTATING;
+//     }
+// }
+
 void PointAndShoot::stepRotateToHeading(const Pose& current_pose) {
     float angle_error = desired_heading - current_pose.angle;
-    
-    // Normalize angle error to [-π, π]
     angle_error = atan2(sin(angle_error), cos(angle_error));
     
-    // Check if we've arrived, considering rotation direction
     if (fabs(angle_error) < heading_tolerance) {
         if (mode == PointAndShootMode::VELOCITY_TRACKING) {
             kinematics.move(robotSpeed, 1e6f);
-            state = PAS_SMOOTH_MOVING;  // Go to tracking, not PAS_START_MOVING
+            state = PAS_SMOOTH_MOVING;
         } else {
             state = PAS_START_MOVING;
         }
         return;
     }
-    // Verify we're still rotating in the correct direction
+    // else if ((rotationDirection > 0 && angle_error < 0) || 
+    //          (rotationDirection < 0 && angle_error > 0)) {
+    //     state = PAS_START_ROTATING;
+    //     return;
+    // }
     else if ((rotationDirection > 0 && angle_error < 0) || 
-             (rotationDirection < 0 && angle_error > 0)) {
-        // Overshot or heading changed during rotation — restart
+         (rotationDirection < 0 && angle_error > 0)) {
+        // Actively brake against the overshoot direction before restarting
+        if (rotationDirection > 0) {
+            kinematics.rotateCW(min_rotation_speed);
+        } else {
+            kinematics.rotateCCW(min_rotation_speed);
+        }
         state = PAS_START_ROTATING;
+        return;
+    }
+
+   
+    //use default rotation speed when robotspeed is less because otherwise rotation does not work
+    //when target is very close
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    if (robotSpeed < MIN_ROTATION_SPEED) {
+        rotation_speed = MIN_ROTATION_SPEED * multiplierRotationSpeed;
+    }
+
+     // Continuously update speed as we close in on the target heading
+
+    if (fabs(angle_error) < slow_down_angle) {
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);
+    }
+
+    if (fabs(rotation_speed - last_rotation_speed) > 5) {
+        last_rotation_speed = rotation_speed;
+        if (rotationDirection > 0) {
+            kinematics.rotateCCW(rotation_speed);
+        } else {
+            kinematics.rotateCW(rotation_speed);
+        }
     }
 }
 
@@ -249,6 +359,13 @@ void PointAndShoot::stepStartMovingTarget(const Pose& current_pose) {
 // INFINITE Mode: Send move straight command once
 void PointAndShoot::stepStartMovingInfiniteStraight() {
     kinematics.move(robotSpeed, 1e6f);  // Very large radius = straight line
+    state = PAS_MOVING;
+}
+
+// DISTANCE Mode: Record start position and begin moving straight
+void PointAndShoot::stepStartMovingDistance(const Pose& current_pose) {
+    start_moving_pos = Vector(current_pose.x, current_pose.y);
+    kinematics.move(robotSpeed * moveDirection, 1e6f);
     state = PAS_MOVING;
 }
 
@@ -289,56 +406,106 @@ void PointAndShoot::stepMovingSmoothCurve(const Pose& current_pose) {
     kinematics.move(robotSpeed, radius);
 }
 
-// Step 4: Check if target reached (only in TARGET mode)
+// Step 4: Check if target reached (TARGET and DISTANCE modes)
 void PointAndShoot::stepCheckTargetReached(const Pose& current_pose) {
-    // Calculate travelled distance from start of movement
     float dx = current_pose.x - start_moving_pos.x;
     float dy = current_pose.y - start_moving_pos.y;
     float travelled_distance = sqrt(dx * dx + dy * dy);
-    
-    // Stop when travelled distance >= target distance
-    if (travelled_distance >= target_distance) {
-        state = PAS_START_ROTATE_AT_TARGET;
+    float remaining = target_distance - travelled_distance;
+
+    if (mode == PointAndShootMode::DISTANCE) {
+        if (remaining <= 0.0f) {
+            state = PAS_STOP;
+            return;
+        }
+        // Slow down as approaching target; cap slowdown zone at half the total distance
+        float zone = fmin(move_slow_down_distance, target_distance * 0.5f);
+        if (remaining < zone) {
+            float move_speed = robotSpeed * (remaining / zone);
+            move_speed = fmax(move_speed, min_move_speed);
+            kinematics.move(move_speed * moveDirection, 1e6f);
+        }
+    } else {
+        if (remaining <= 0.0f) {
+            state = PAS_START_ROTATE_AT_TARGET;
+        }
     }
 }
 
 // Step 5: Send rotate to target angle command with direction
 void PointAndShoot::stepStartRotateAtTarget(const Pose& current_pose) {
-    float angle_error = target_pose.angle - current_pose.angle;
-    angle_error = atan2(sin(angle_error), cos(angle_error));
+    float shortest = atan2(sin(target_pose.angle - current_pose.angle),
+                           cos(target_pose.angle - current_pose.angle));
+    float angle_error;
+    if (turnDirectionPref == 1)       // force CCW: arc distance in [0, 2π)
+        angle_error = shortest >= 0.0f ? shortest : shortest + 2.0f * M_PI;
+    else if (turnDirectionPref == -1) // force CW: arc distance in (-2π, 0]
+        angle_error = shortest <= 0.0f ? shortest : shortest - 2.0f * M_PI;
+    else
+        angle_error = shortest;
     
     if (fabs(angle_error) < heading_tolerance) {
         state = PAS_STOP;
         return;
     }
     
-    // Choose rotation direction based on shortest angular distance
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    if (fabs(angle_error) < slow_down_angle) {
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);
+    }
+
+    last_rotation_speed = -1.0f;
     if (angle_error > 0) {
-        rotationDirection = 1;  // Counter-clockwise
-        kinematics.rotateCCW(robotSpeed);  // Counter-clockwise
+        rotationDirection = 1;
+        kinematics.rotateCCW(rotation_speed);
     } else {
-        rotationDirection = -1;  // Clockwise
-        kinematics.rotateCW(robotSpeed);   // Clockwise
+        rotationDirection = -1;
+        kinematics.rotateCW(rotation_speed);
     }
     state = PAS_ROTATE_AT_TARGET;
 }
 
 // Step 6: Check if arrived at target angle
 void PointAndShoot::stepRotateAtTarget(const Pose& current_pose) {
-    float angle_error = target_pose.angle - current_pose.angle;
-    
-    // Normalize angle error to [-π, π]
-    angle_error = atan2(sin(angle_error), cos(angle_error));
-    
-    // Check if we've arrived, considering rotation direction
+    float shortest = atan2(sin(target_pose.angle - current_pose.angle),
+                           cos(target_pose.angle - current_pose.angle));
+    float angle_error;
+    if (turnDirectionPref == 1)
+        angle_error = shortest >= 0.0f ? shortest : shortest + 2.0f * M_PI;
+    else if (turnDirectionPref == -1)
+        angle_error = shortest <= 0.0f ? shortest : shortest - 2.0f * M_PI;
+    else
+        angle_error = shortest;
+
     if (fabs(angle_error) < heading_tolerance) {
         state = PAS_STOP;
+        return;
     }
-    // Verify we're still rotating in the correct direction
-    else if ((rotationDirection > 0 && angle_error < 0) || 
-             (rotationDirection < 0 && angle_error > 0)) {
-        // Overshot the target, transition to stop
-        state = PAS_STOP;
+
+    // Overshoot: for forced direction, error wraps to >π; for shortest, sign flips
+    bool overshot = (turnDirectionPref != 0)
+        ? (fabs(angle_error) > M_PI)
+        : ((rotationDirection > 0 && angle_error < 0) || (rotationDirection < 0 && angle_error > 0));
+    if (overshot) {
+        if (rotationDirection > 0) kinematics.rotateCW(min_rotation_speed);
+        else                       kinematics.rotateCCW(min_rotation_speed);
+        state = PAS_START_ROTATE_AT_TARGET;
+        return;
+    }
+
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    if (robotSpeed < rotationSpeed) {
+        rotation_speed = rotationSpeed * multiplierRotationSpeed;
+    }
+    if (fabs(angle_error) < slow_down_angle) {
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);
+    }
+    if (fabs(rotation_speed - last_rotation_speed) > 5) {
+        last_rotation_speed = rotation_speed;
+        if (rotationDirection > 0) kinematics.rotateCCW(rotation_speed);
+        else                       kinematics.rotateCW(rotation_speed);
     }
 }
 
@@ -356,7 +523,7 @@ void PointAndShoot::setTrackedVelocity(float vx, float vy, float speed,
     this->max_angular_rate = max_angular_rate;
     tracked_vx = vx;
     tracked_vy = vy;
-    desired_heading = atan2(vy, vx);
+    desired_heading = atan2(vy, vx) - kinematics.globalCoordinateSystemOffsetAngle;
     
     if (speed >= 0.0f) {
         robotSpeed = speed;
@@ -379,7 +546,7 @@ void PointAndShoot::stepVelocityTracking(const Pose& current_pose) {
     float abs_error = fabs(angle_error);
     
     // Large heading error: stop and rotate in place
-    if (abs_error > rotate_in_place_threshold) {
+    if (abs_error >= rotate_in_place_threshold -0.1) {
         state = PAS_START_ROTATING;
         return;
     }
@@ -398,7 +565,7 @@ void PointAndShoot::stepVelocityTracking(const Pose& current_pose) {
     float radius = robotSpeed / clamped_error;
     
     // Clamp minimum radius to avoid spinning
-    float min_radius = 15.0f;  // mm — roughly half wheel base
+    float min_radius = 25.0f;  // mm — roughly half wheel base
     if (fabs(radius) < min_radius) {
         radius = (radius > 0) ? min_radius : -min_radius;
     }
@@ -440,6 +607,147 @@ void PointAndShoot::setRobotVelocityAndActivate(float _vRobot){ //in mm/s and se
     }
 
 };
+
+
+// ODOMETRY_RAW Mode: Rotate by a specific angle using raw odometry
+void PointAndShoot::rotateByDegrees(float angle_deg, float speed) {
+    // Store the desired rotation angle (will be converted to absolute angle in step function)
+    target_odometry_angle = angle_deg * M_PI / 180.0f;  // Store as radians
+    
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+    
+    state = PAS_START_ODOMETRY_ROTATE;
+}
+
+// ODOMETRY_RAW Mode: Move by a specific distance using raw odometry
+void PointAndShoot::moveBy(float distance_mm, float speed) {
+    // Store starting distance and target
+    target_odometry_distance = fabs(distance_mm);
+    moveDirection = (distance_mm >= 0.0f) ? 1.0f : -1.0f;
+    
+    if (speed >= 0.0f) {
+        robotSpeed = speed;
+    }
+    
+    state = PAS_START_ODOMETRY_MOVE;
+}
+
+// Step: Start odometry-based rotation
+void PointAndShoot::stepStartOdometryRotate(const Pose& current_pose) {
+    // Calculate target absolute angle: current angle + desired rotation angle
+    starting_odometry_angle = current_pose.angle;
+    float absolute_target_angle = starting_odometry_angle + target_odometry_angle;
+    target_odometry_angle = absolute_target_angle;  // Update to absolute angle for next steps
+    
+    float angle_error = target_odometry_angle - current_pose.angle;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    if (fabs(angle_error) < heading_tolerance) {
+        // Already at target angle
+        state = PAS_STOP;
+        return;
+    }
+    
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    // Reduce speed proportionally below a threshold angle
+    if (fabs(angle_error) < slow_down_angle) {
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);  // avoid stalling
+    }
+    
+    last_rotation_speed = -1.0f;
+    // Choose rotation direction based on shortest angular distance
+    if (angle_error > 0) {
+        rotationDirection = 1;  // Counter-clockwise
+        kinematics.rotateCCW(rotation_speed);
+    } else {
+        rotationDirection = -1;  // Clockwise
+        kinematics.rotateCW(rotation_speed);
+    }
+    state = PAS_ODOMETRY_ROTATING;
+}
+
+// Step: Check if arrived at target angle (odometry-based)
+void PointAndShoot::stepOdometryRotating(const Pose& current_pose) {
+    float angle_error = target_odometry_angle - current_pose.angle;
+    angle_error = atan2(sin(angle_error), cos(angle_error));
+    
+    if (fabs(angle_error) < heading_tolerance) {
+        state = PAS_STOP;
+        return;
+    }
+    
+    // Check for overshoot
+    if ((rotationDirection > 0 && angle_error < 0) || 
+        (rotationDirection < 0 && angle_error > 0)) {
+        // Apply braking against overshoot direction
+        if (rotationDirection > 0) {
+            kinematics.rotateCW(min_rotation_speed);
+        } else {
+            kinematics.rotateCCW(min_rotation_speed);
+        }
+        state = PAS_START_ODOMETRY_ROTATE;
+        return;
+    }
+
+    float rotation_speed = robotSpeed * multiplierRotationSpeed;
+    if (robotSpeed < MIN_ROTATION_SPEED) {
+        rotation_speed = MIN_ROTATION_SPEED * multiplierRotationSpeed;
+    }
+
+    // Continuously update speed as we close in on target heading
+    if (fabs(angle_error) < slow_down_angle) {
+        rotation_speed *= fabs(angle_error) / slow_down_angle;
+        rotation_speed = fmax(rotation_speed, min_rotation_speed);
+    }
+
+    if (fabs(rotation_speed - last_rotation_speed) > 5) {
+        last_rotation_speed = rotation_speed;
+        if (rotationDirection > 0) {
+            kinematics.rotateCCW(rotation_speed);
+        } else {
+            kinematics.rotateCW(rotation_speed);
+        }
+    }
+}
+
+// Step: Start odometry-based movement
+void PointAndShoot::stepStartOdometryMove(const Pose& current_pose) {
+    // Store starting position for distance tracking
+    start_moving_pos = Vector(current_pose.x, current_pose.y);
+    
+    if (target_odometry_distance < dist_tolerance) {
+        // Already at target distance
+        state = PAS_STOP;
+        return;
+    }
+    
+    kinematics.move(robotSpeed * moveDirection, 1e6f);  // Very large radius = straight line
+    state = PAS_ODOMETRY_MOVING;
+}
+
+// Step: Check if arrived at target distance (odometry-based)
+void PointAndShoot::stepOdometryMoving(const Pose& current_pose) {
+    float dx = current_pose.x - start_moving_pos.x;
+    float dy = current_pose.y - start_moving_pos.y;
+    float travelled_distance = sqrt(dx * dx + dy * dy);
+    float remaining = target_odometry_distance - travelled_distance;
+
+    if (remaining <= 0.0f) {
+        state = PAS_STOP;
+        return;
+    }
+
+    // Slow down as approaching target; cap slowdown zone at half the total distance
+    float zone = fmin(move_slow_down_distance, target_odometry_distance * 0.5f);
+    if (remaining < zone) {
+        float move_speed = robotSpeed * (remaining / zone);
+        move_speed = fmax(move_speed, min_move_speed);
+        kinematics.move(move_speed * moveDirection, 1e6f);
+    }
+}
 
 
 } // namespace SmallRobots

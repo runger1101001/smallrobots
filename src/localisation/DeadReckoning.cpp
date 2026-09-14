@@ -60,9 +60,9 @@ namespace SmallRobots {
         curPose.x = x;
         curPose.y = y;
         if (angleUnit == AngleUnit::DEGREES) {
-            curPose.angle = angle * M_PI / 180.0f;
+            curPose.angle = angle * M_PI / 180.0f - kinematics.globalCoordinateSystemOffsetAngle;
         } else {
-            curPose.angle = angle;
+            curPose.angle = angle - kinematics.globalCoordinateSystemOffsetAngle;
         }
     };
 

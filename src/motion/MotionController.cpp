@@ -135,6 +135,26 @@ namespace SmallRobots {
         point_and_shoot.setDesiredVelocity(vx, vy, speed);
         currentMode = POINT_AND_SHOOT;
     }
+    void MotionController::setHeadingPointAndShoot(float angle_deg, float speed, int8_t turnPref) {
+        enableMotors();
+        point_and_shoot.setHeading(angle_deg * M_PI / 180.0f, speed, turnPref);
+        currentMode = POINT_AND_SHOOT;
+    }
+    void MotionController::setMoveDistancePointAndShoot(float distance_mm, float speed) {
+        enableMotors();
+        point_and_shoot.setMoveDistance(distance_mm, speed);
+        currentMode = POINT_AND_SHOOT;
+    }
+    void MotionController::rotateByDegreesPointAndShoot(float angle_deg, float speed) {
+        enableMotors();
+        point_and_shoot.rotateByDegrees(angle_deg, speed);
+        currentMode = POINT_AND_SHOOT;
+    }
+    void MotionController::moveByPointAndShoot(float distance_mm, float speed) {
+        enableMotors();
+        point_and_shoot.moveBy(distance_mm, speed);
+        currentMode = POINT_AND_SHOOT;
+    }
     void MotionController::setTargetPointAndShoot(const Pose& target, float speed, AngleUnit angleUnit) {
         enableMotors();
         
